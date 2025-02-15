@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-400 font-mono">
-      <h1 className="text-5xl font-bold mb-4">[ Gary's Gallery_ ]</h1>
+      <h1 className="text-5xl font-bold mb-4">[ Gary&apos;s Gallery_ ]</h1>
       <p className="text-lg text-green-300 mb-6">_Upload. Share. Organize_</p>
 
       <div className="flex space-x-4">
@@ -24,7 +24,7 @@ function Home() {
       <div className="mt-10 w-full max-w-2xl p-6 bg-gray-900 rounded-lg shadow-lg border border-green-400 text-center">
         <h2 className="text-xl font-semibold">_Your Image Repository_</h2>
         <p className="text-green-300 mt-2">
-          We're just like imgur.com without the annoying social features.
+          We&apos;re just like imgur.com without the annoying social features.
         </p>
       </div>
 

@@ -97,7 +97,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isSubmitting || isLoading}
-              className="w-full py-2 bg-green-500 text-black rounded-lg hover:bg-green-400 transition"
+              className="w-full py-2 bg-green-500 text-black rounded-lg hover:bg-green-600 transition"
             >
               {isLoading ? "Logging In..." : "[ Log_In ]"}
             </button>
@@ -106,7 +106,7 @@ const Login = () => {
       </Formik>
 
       <p className="mt-4 text-xs text-green-500">
-        Don't have an account yet?{" "}
+        Don&apos;t have an account yet?{" "}
         <a href="/signup" className="text-green-300 hover:underline">
           [ Sign Up ]
         </a>
