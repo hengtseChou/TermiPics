@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as Yup from "yup";
 
 const Login = () => {
@@ -25,7 +26,7 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/login/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -35,7 +36,7 @@ const Login = () => {
 
       if (response.ok) {
         const { access_token, refresh_token } = data;
-        localStorage.setItem("access_token", access_token);
+        document.cookie = `access_token=${access_token}; path=/; HttpOnly`;
         document.cookie = `refresh_token=${refresh_token}; path=/; HttpOnly`;
         navigate("/dashboard");
       } else {
@@ -47,6 +48,10 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google`;
   };
 
   return (
@@ -105,14 +110,26 @@ const Login = () => {
         )}
       </Formik>
 
+      <div className="flex items-center my-6 w-full">
+        <div className="flex-grow h-px bg-green-500"></div>
+        <span className="mx-4 text-green-300">or</span>
+        <div className="flex-grow h-px bg-green-500"></div>
+      </div>
+
+      <button
+        onClick={handleGoogleLogin}
+        className="w-full py-2 mb-6 bg-gray-900 text-green-300 rounded-lg hover:bg-gray-800 transition flex items-center justify-center space-x-3"
+      >
+        <FontAwesomeIcon icon={["fab", "google"]} className="text-xl" />
+        <span>[ Continue_With_Google ]</span>
+      </button>
+
       <p className="mt-4 text-xs text-green-500">
         Don&apos;t have an account yet?{" "}
-        <a href="/signup" className="text-green-300 hover:underline">
+        <a href="/auth/signup" className="text-green-300 hover:underline">
           [ Sign Up ]
         </a>
       </p>
-
-      <p className="mt-6 text-xs text-green-500">[ System_Functional ]</p>
     </div>
   );
 };

@@ -31,7 +31,7 @@ const Signup = () => {
     setError("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/signup/`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -41,7 +41,7 @@ const Signup = () => {
 
       if (response.ok) {
         const { access_token, refresh_token } = data;
-        localStorage.setItem("access_token", access_token);
+        document.cookie = `access_token=${access_token}; path=/; HttpOnly`;
         document.cookie = `refresh_token=${refresh_token}; path=/; HttpOnly`;
         navigate("/dashboard");
       } else {
@@ -53,6 +53,10 @@ const Signup = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google`;
   };
 
   return (
@@ -131,21 +135,20 @@ const Signup = () => {
         <div className="flex-grow h-px bg-green-500"></div>
       </div>
 
-      <a href="/continue-with-google" className="w-full mb-6">
-        <button className="w-full py-2 bg-gray-900 text-green-300 rounded-lg hover:bg-gray-800 transition flex items-center justify-center space-x-3">
-          <FontAwesomeIcon icon={["fab", "google"]} className="text-xl" />
-          <span>[ Continue_With_Google ]</span>
-        </button>
-      </a>
+      <button
+        onClick={handleGoogleLogin}
+        className="w-full py-2 mb-6 bg-gray-900 text-green-300 rounded-lg hover:bg-gray-800 transition flex items-center justify-center space-x-3"
+      >
+        <FontAwesomeIcon icon={["fab", "google"]} className="text-xl" />
+        <span>[ Continue_With_Google ]</span>
+      </button>
 
       <p className="mt-4 text-xs text-green-500">
         Already have an account?{" "}
-        <a href="/login" className="text-green-300 hover:underline">
+        <a href="/auth/login" className="text-green-300 hover:underline">
           [ Login ]
         </a>
       </p>
-
-      <p className="mt-4 text-xs text-green-500">[ System_Functional ]</p>
     </div>
   );
 };

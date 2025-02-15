@@ -8,13 +8,13 @@ function Home() {
 
       <div className="flex space-x-4">
         <Link
-          to="/signup"
+          to="/auth/signup"
           className="px-6 py-2 bg-green-500 text-black rounded-lg hover:bg-green-600 transition"
         >
           [ Sign_Up ]
         </Link>
         <Link
-          to="/login"
+          to="/auth/login"
           className="px-6 py-2 bg-gray-900 text-green-300 rounded-lg hover:bg-gray-800 transition"
         >
           [ Login ]
