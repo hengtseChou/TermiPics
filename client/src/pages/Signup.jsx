@@ -1,121 +1,142 @@
 import { useState, useEffect } from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { Formik, Field, Form, ErrorMessage } from "formik";
+import { useNavigate } from "react-router-dom";
+import * as Yup from "yup";
 
-function Signup() {
-  const [formData, setFormData] = useState({
-    email: "",
-    username: "",
-    password: "",
-  });
+const Signup = () => {
+  const [isLoading, setIsLoading] = useState(false); // To show a loading state
+  const [successMessage, setSuccessMessage] = useState(""); // To show success message
+  const [error, setError] = useState(""); // For error handling
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.title = "Sign Up - Gary's Gallery";
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const validationSchema = Yup.object({
+    email: Yup.string().email("Invalid email address").required("Email is required"),
+    username: Yup.string()
+      .matches(/^[a-zA-Z0-9]+$/, "Username can only contain English letters and numbers")
+      .required("Username is required"),
+    password: Yup.string()
+      .min(8, "Password must be at least 8 characters")
+      .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+      .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .required("Password is required"),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    const response = await fetch("http://127.0.0.1:8000/signup/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-  
-    const data = await response.json();
-    if (response.ok) {
-      console.log("Signup successful:", data);
-    } else {
-      console.error("Signup failed:", data.detail);
+  const handleSubmit = async (values) => {
+    setIsLoading(true);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/signup/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Extract tokens from the response
+        const { access_token, refresh_token } = data;
+
+        // Store access token in localStorage or memory
+        localStorage.setItem("access_token", access_token);
+
+        // Store refresh token in an HTTP-only cookie
+        document.cookie = `refresh_token=${refresh_token}; path=/; HttpOnly`;
+
+        // setSuccessMessage("Signup successful! You can now log in.");
+        navigate("/dashboard"); // Redirect to the dashboard route
+        
+      } else {
+        setError(data.detail || "Something went wrong during signup.");
+      }
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
-  };  
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    const response = await fetch("http://127.0.0.1:8000/google-login/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: credentialResponse.credential }),
-    });
-  
-    const data = await response.json();
-    if (response.ok) {
-      console.log("Google Login Successful:", data);
-    } else {
-      console.error("Google Login Failed:", data.detail);
-    }
-  };
-
-  const handleGoogleFailure = () => {
-    console.error("Google Login Failed");
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-400 font-mono">
       <h1 className="text-4xl font-bold mb-6">[ Sign_Up_ ]</h1>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-lg border border-green-400">
-        <label className="block mb-4">
-          <span className="text-green-300">Email:</span>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
-        </label>
+      {/* Formik form */}
+      <Formik
+        initialValues={{
+          email: "",
+          username: "",
+          password: "",
+        }}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ isSubmitting }) => (
+          <Form className="w-[24rem] max-w-full bg-gray-900 p-6 rounded-lg shadow-lg border border-green-400">
+            {/* Email Field */}
+            <div className="mb-4">
+              <label htmlFor="email" className="text-green-300">
+                Email:
+              </label>
+              <Field
+                type="email"
+                name="email"
+                className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+              <ErrorMessage name="email" component="div" className="text-red-500 mt-1" />
+            </div>
 
-        <label className="block mb-4">
-          <span className="text-green-300">Username:</span>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
-        </label>
+            {/* Username Field */}
+            <div className="mb-4">
+              <label htmlFor="username" className="text-green-300">
+                Username:
+              </label>
+              <Field
+                type="text"
+                name="username"
+                className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+              <ErrorMessage name="username" component="div" className="text-red-500 mt-1" />
+            </div>
 
-        <label className="block mb-6">
-          <span className="text-green-300">Password:</span>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
-        </label>
+            {/* Password Field */}
+            <div className="mb-6">
+              <label htmlFor="password" className="text-green-300">
+                Password:
+              </label>
+              <Field
+                type="password"
+                name="password"
+                className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+              <ErrorMessage name="password" component="div" className="text-red-500 mt-1" />
+            </div>
 
-        <button type="submit" className="w-full py-2 bg-green-800 text-black rounded-lg hover:bg-green-700 transition">
-          [ Create_Account ]
-        </button>
-      </form>
+            {/* Display Error and Success Messages */}
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+            {successMessage && <p className="text-green-500 mb-4">{successMessage}</p>}
 
-      <div className="mt-6 w-full max-w-md">
-        <div className="flex items-center justify-center space-x-2">
-          <div className="w-1/3 h-px bg-green-400"></div>
-          <p className="text-green-300 text-sm">or</p>
-          <div className="w-1/3 h-px bg-green-400"></div>
-        </div>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting || isLoading}
+              className="w-full py-2 bg-green-500 text-black rounded-lg hover:bg-green-400 transition"
+            >
+              {isLoading ? "Signing Up..." : "[ Create_Account ]"}
+            </button>
+          </Form>
+        )}
+      </Formik>
 
-        <div className="mt-4 w-full flex items-center justify-center">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleFailure}
-          />
-        </div>
-      </div>
-
-      <p className="mt-6 text-xs text-green-500">[ System_Ready ]</p>
+      <p className="mt-6 text-xs text-green-500">[ System_Functional ]</p>
     </div>
   );
-}
+};
 
 export default Signup;
