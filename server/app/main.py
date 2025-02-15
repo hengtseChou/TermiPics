@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.config import SECRET_KEY
 from app.routes.auth import router as auth_router
 
 app = FastAPI()
 
-# Enable CORS for local development
+app.include_router(auth_router, prefix="/auth")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -13,6 +15,4 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Include the authentication router
-app.include_router(auth_router)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
