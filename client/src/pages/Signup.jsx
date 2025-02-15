@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as Yup from "yup";
 
 const Signup = () => {
@@ -124,6 +125,19 @@ const Signup = () => {
         )}
       </Formik>
 
+      <div className="flex items-center my-6 w-full">
+        <div className="flex-grow h-px bg-green-500"></div>
+        <span className="mx-4 text-green-300">or</span>
+        <div className="flex-grow h-px bg-green-500"></div>
+      </div>
+
+      <a href="/continue-with-google" className="w-full mb-6">
+        <button className="w-full py-2 bg-gray-900 text-green-300 rounded-lg hover:bg-gray-800 transition flex items-center justify-center space-x-3">
+          <FontAwesomeIcon icon={["fab", "google"]} className="text-xl" />
+          <span>[ Continue_With_Google ]</span>
+        </button>
+      </a>
+
       <p className="mt-4 text-xs text-green-500">
         Already have an account?{" "}
         <a href="/login" className="text-green-300 hover:underline">
@@ -131,7 +145,7 @@ const Signup = () => {
         </a>
       </p>
 
-      <p className="mt-6 text-xs text-green-500">[ System_Functional ]</p>
+      <p className="mt-4 text-xs text-green-500">[ System_Functional ]</p>
     </div>
   );
 };
