@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
 const Signup = () => {
-  const [isLoading, setIsLoading] = useState(false); // To show a loading state
-  const [successMessage, setSuccessMessage] = useState(""); // To show success message
-  const [error, setError] = useState(""); // For error handling
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
@@ -29,7 +28,6 @@ const Signup = () => {
   const handleSubmit = async (values) => {
     setIsLoading(true);
     setError("");
-    setSuccessMessage("");
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/signup/`, {
@@ -41,23 +39,16 @@ const Signup = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Extract tokens from the response
         const { access_token, refresh_token } = data;
-
-        // Store access token in localStorage or memory
         localStorage.setItem("access_token", access_token);
-
-        // Store refresh token in an HTTP-only cookie
         document.cookie = `refresh_token=${refresh_token}; path=/; HttpOnly`;
-
-        // setSuccessMessage("Signup successful! You can now log in.");
-        navigate("/dashboard"); // Redirect to the dashboard route
-        
+        navigate("/dashboard");
       } else {
         setError(data.detail || "Something went wrong during signup.");
       }
     } catch (error) {
-      setError(error.message);
+      // console.error(error.message);
+      setError("Some error occurred with the server. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -120,7 +111,6 @@ const Signup = () => {
 
             {/* Display Error and Success Messages */}
             {error && <p className="text-red-500 mb-4">{error}</p>}
-            {successMessage && <p className="text-green-500 mb-4">{successMessage}</p>}
 
             {/* Submit Button */}
             <button
@@ -133,6 +123,13 @@ const Signup = () => {
           </Form>
         )}
       </Formik>
+
+      <p className="mt-4 text-xs text-green-500">
+        Already have an account?{" "}
+        <a href="/login" className="text-green-300 hover:underline">
+          [ Login ]
+        </a>
+      </p>
 
       <p className="mt-6 text-xs text-green-500">[ System_Functional ]</p>
     </div>

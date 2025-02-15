@@ -13,7 +13,7 @@ from app.config import (
     SECRET_KEY,
     supabase,
 )
-from app.schemas import SignupRequest, UserResponse
+from app.schemas import SignupRequest, LoginRequest, UserResponse
 
 router = APIRouter()
 
@@ -70,23 +70,19 @@ async def signup(request: SignupRequest):
     last_active = created_at
 
     try:
-        response = (
-            supabase.table("users")
-            .insert(
-                {
-                    "user_uid": user_uid,
-                    "email": request.email,
-                    "username": request.username,
-                    "password": hashed_password,
-                    "auth_provider": "email",
-                    "created_at": created_at,
-                    "last_active": last_active,
-                }
-            )
-            .execute()
-        )
+        supabase.table("users").insert(
+            {
+                "user_uid": user_uid,
+                "email": request.email,
+                "username": request.username,
+                "password": hashed_password,
+                "auth_provider": "email",
+                "created_at": created_at,
+                "last_active": last_active,
+            }
+        ).execute()
     except APIError:
-        raise HTTPException(status_code=500, detail="Error creating user")
+        raise HTTPException(status_code=500, detail="Error connecting to database")
 
     access_token = create_access_token(data={"user_uid": user_uid})
     refresh_token = create_refresh_token(data={"user_uid": user_uid})
@@ -95,7 +91,41 @@ async def signup(request: SignupRequest):
         user_uid=user_uid,
         email=request.email,
         username=request.username,
-        created_at=created_at,
+        last_active=last_active,
+        access_token=access_token,
+        refresh_token=refresh_token,
+    )
+
+
+@router.post("/login/", response_model=UserResponse)
+async def login(request: LoginRequest):
+    """
+    Handle email/password login.
+    """
+    user = supabase.table("users").select("*").eq("email", request.email).single().execute()
+    if not user.data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user = user.data
+    if not pwd_context.verify(request.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+
+    user_uid = user["user_uid"]
+    access_token = create_access_token(data={"user_uid": user_uid})
+    refresh_token = create_refresh_token(data={"user_uid": user_uid})
+    last_active = datetime.now(timezone.utc).isoformat()
+
+    try:
+        supabase.table("users").update({"last_active": last_active}).eq(
+            "user_uid", user_uid
+        ).execute()
+    except APIError:
+        raise HTTPException(status_code=500, detail="Error connecting to supabase")
+
+    return UserResponse(
+        user_uid=user["user_uid"],
+        email=user["email"],
+        username=user["username"],
         last_active=last_active,
         access_token=access_token,
         refresh_token=refresh_token,
