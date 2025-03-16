@@ -1,0 +1,12 @@
+#!/bin/bash
+cd "$(git rev-parse --show-toplevel)"
+echo "[pre-commit] Running pre-commit hook"
+echo "[pre-commit] Formatting frontend code"
+cd client
+npx eslint --fix src vite.config.js eslint.config.js
+prettier src vite.config.js eslint.config.js --print-width 100 -w
+echo "[pre-commit] Formatting backend code"
+cd ../server
+isort app
+black app -l 100
+echo "[pre-commit] Done"

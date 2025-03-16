@@ -1,10 +1,15 @@
-import { useState, useEffect } from "react";
-import { Formik, Field, Form, ErrorMessage } from "formik";
-import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from "axios";
+import { Formik, Field, Form, ErrorMessage } from "formik";
+import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
+import { AuthContext } from "../context/AuthContext";
+
 const Login = () => {
+  const { loginUser } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,42 +28,47 @@ const Login = () => {
 
   const handleSubmit = async (values) => {
     setIsLoading(true);
-    setError("");
-
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/auth/login/`, {
-        method: "POST",
+      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/login/`, values, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        const { access_token, refresh_token } = data;
-        document.cookie = `access_token=${access_token}; path=/; HttpOnly`;
-        document.cookie = `refresh_token=${refresh_token}; path=/; HttpOnly`;
-        navigate("/dashboard");
-      } else {
-        setError(data.detail || "Something went wrong during login.");
-      }
+      const { access_token, refresh_token, user_uid } = response.data;
+      loginUser(access_token, refresh_token, user_uid);
+      navigate("/dashboard");
     } catch (error) {
-      // console.error(error.message);
-      setError("Some error occurred with the server. Please try again later.");
+      if (error.response) {
+        setError("Some error occurred with the server. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google`;
-  };
+  const handleGoogleLogin = useGoogleLogin({
+    flow: "auth-code",
+    onSuccess: async (codeResponse) => {
+      try {
+        setIsLoading(true);
+        const authResponse = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/google`, {
+          code: codeResponse.code,
+        });
+        const { access_token, refresh_token, user_uid } = authResponse.data;
+        loginUser(access_token, refresh_token, user_uid);
+        navigate("/dashboard");
+      } catch (error) {
+        setError("Error occurred while authenticating with Google.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: () => {
+      setError("Google login failed. Please try again.");
+    },
+  });
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-400 font-mono">
       <h1 className="text-4xl font-bold mb-6">[ Login_ ]</h1>
-
-      {/* Formik form */}
       <Formik
         initialValues={{
           email: "",
@@ -81,7 +91,6 @@ const Login = () => {
               />
               <ErrorMessage name="email" component="div" className="text-red-500 mt-1" />
             </div>
-
             {/* Password Field */}
             <div className="mb-6">
               <label htmlFor="password" className="text-green-300">
@@ -94,10 +103,8 @@ const Login = () => {
               />
               <ErrorMessage name="password" component="div" className="text-red-500 mt-1" />
             </div>
-
             {/* Display Error Messages */}
             {error && <p className="text-red-500 mb-4">{error}</p>}
-
             {/* Submit Button */}
             <button
               type="submit"
@@ -117,7 +124,7 @@ const Login = () => {
       </div>
 
       <button
-        onClick={handleGoogleLogin}
+        onClick={() => handleGoogleLogin()}
         className="w-full py-2 mb-6 bg-gray-900 text-green-300 rounded-lg hover:bg-gray-800 transition flex items-center justify-center space-x-3"
       >
         <FontAwesomeIcon icon={["fab", "google"]} className="text-xl" />
@@ -126,7 +133,7 @@ const Login = () => {
 
       <p className="mt-4 text-xs text-green-500">
         Don&apos;t have an account yet?{" "}
-        <a href="/auth/signup" className="text-green-300 hover:underline">
+        <a href="/signup" className="text-green-300 hover:underline">
           [ Sign Up ]
         </a>
       </p>

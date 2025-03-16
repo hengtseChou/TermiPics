@@ -12,10 +12,19 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class UserResponse(BaseModel):
-    user_uid: str
-    email: str
-    username: str
-    last_active: str
+class TokenRequest(BaseModel):
+    token: str
+
+
+class AuthResponse(BaseModel):
     access_token: str
     refresh_token: str
+    user_uid: str
+
+
+class VerificationResponse(BaseModel):
+    user_uid: str
+
+
+class GoogleOAuthRequest(BaseModel):
+    code: str
