@@ -1,8 +1,9 @@
+// src/contexts/AuthProvider.js
 import axios from "axios";
-import React, { useState, useEffect, createContext } from "react";
-import { setCookie, getCookie } from "../utils/cookies";
+import React, { useState, useEffect } from "react";
 
-export const AuthContext = createContext();
+import { AuthContext } from "./AuthContext";
+import { setCookie, getCookie } from "../utils/cookies";
 
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -28,9 +29,7 @@ const useAuth = () => {
             try {
               const response = await axios.post(
                 `${import.meta.env.VITE_SERVER_URL}/auth/refresh-token`,
-                {
-                  token: refreshToken,
-                },
+                { token: refreshToken },
               );
               // Set the new access token in cookies
               setCookie("access_token", response.data.access_token);
