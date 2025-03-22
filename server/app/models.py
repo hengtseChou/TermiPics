@@ -8,10 +8,10 @@ class User:
         user_uid: UUID,
         email: str,
         username: str,
-        password: str = None,
-        auth_provider: str = None,
-        created_at: datetime = None,
-        last_active: datetime = None,
+        password: str | None = None,
+        auth_provider: str | None = None,
+        created_at: datetime | None = None,
+        last_active: datetime | None = None,
     ):
         self.user_uid = user_uid
         self.email = email

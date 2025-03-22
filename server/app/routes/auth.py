@@ -1,5 +1,3 @@
-import logging
-
 import httpx
 from fastapi import APIRouter, HTTPException
 from google.auth.transport import requests
@@ -20,16 +18,7 @@ from app.utils.auth import (
     validate_token,
     verify_password,
 )
-from app.utils.db import (
-    get_user_creds,
-    get_user_uid,
-    insert_new_user,
-    is_email_exists,
-    is_username_exists,
-    update_last_active,
-)
-
-logger = logging.getLogger("uvicorn.error")
+from app.utils.db import SupabaseTable, supabase_client
 
 router = APIRouter()
 
@@ -39,17 +28,19 @@ async def signup(request: SignupRequest):
     """
     Handle normal email/password signup.
     """
-    if is_email_exists(email=request.email, auth_provider="email"):
-        raise HTTPException(status_code=400, detail="Email already registered")
-    if is_username_exists(username=request.username, auth_provider="email"):
-        raise HTTPException(status_code=400, detail="Username already taken")
+    with supabase_client() as client:
+        supabase = SupabaseTable(client)
+        if supabase.is_email_exists(email=request.email, auth_provider="email"):
+            raise HTTPException(status_code=400, detail="Email already registered")
+        if supabase.is_username_exists(username=request.username, auth_provider="email"):
+            raise HTTPException(status_code=400, detail="Username already taken")
+        user_uid = supabase.insert_new_user(
+            email=request.email,
+            username=request.username,
+            password=request.password,
+            auth_provider="email",
+        )
 
-    user_uid = insert_new_user(
-        email=request.email,
-        username=request.username,
-        password=request.password,
-        auth_provider="email",
-    )
     access_token = create_access_token(data={"user_uid": user_uid})
     refresh_token = create_refresh_token(data={"user_uid": user_uid})
 
@@ -65,16 +56,18 @@ async def login(request: LoginRequest):
     """
     Handle email/password login.
     """
-    user_creds = get_user_creds(request.email)
-    if not user_creds:
-        raise HTTPException(status_code=401, detail="User not found")
-    if not verify_password(request.password, user_creds["password"]):
-        raise HTTPException(status_code=401, detail="Incorrect password")
+    with supabase_client() as client:
+        supabase = SupabaseTable(client)
+        user_creds = supabase.get_user_creds(request.email)
+        if not user_creds:
+            raise HTTPException(status_code=401, detail="User not found")
+        if not verify_password(request.password, user_creds["password"]):
+            raise HTTPException(status_code=401, detail="Incorrect password")
 
-    user_uid = user_creds["user_uid"]
-    access_token = create_access_token(data={"user_uid": user_uid})
-    refresh_token = create_refresh_token(data={"user_uid": user_uid})
-    update_last_active(user_uid)
+        user_uid = user_creds["user_uid"]
+        access_token = create_access_token(data={"user_uid": user_uid})
+        refresh_token = create_refresh_token(data={"user_uid": user_uid})
+        supabase.update_last_active(user_uid)
 
     return AuthResponse(
         access_token=access_token,
@@ -89,7 +82,6 @@ async def continue_with_google(request: GoogleOAuthRequest):
     Handle continue with Google.
     """
     token_request_uri = "https://oauth2.googleapis.com/token"
-    logger.info(request.code)
     data = {
         "code": request.code,
         "client_id": GOOGLE_CLIENT_ID,
@@ -105,33 +97,30 @@ async def continue_with_google(request: GoogleOAuthRequest):
     id_token_value = token_response.get("id_token")
     if not id_token_value:
         raise HTTPException(status_code=400, detail="Missing id_token in response.")
-    try:
-        id_info = id_token.verify_oauth2_token(id_token_value, requests.Request(), GOOGLE_CLIENT_ID)
-        email = id_info.get("email")
-        if is_email_exists(email, auth_provider="google"):
-            user_uid = get_user_uid(email=email, auth_provider="google")
-            update_last_active(user_uid)
+    id_info = id_token.verify_oauth2_token(id_token_value, requests.Request(), GOOGLE_CLIENT_ID)
+    email = id_info.get("email")
+    with supabase_client() as client:
+        supabase = SupabaseTable(client)
+        if supabase.is_email_exists(email, auth_provider="google"):
+            user_uid = supabase.get_user_uid(email=email, auth_provider="google")
+            supabase.update_last_active(user_uid)
         else:
             username = email.split("@")[0]
-            user_uid = insert_new_user(
+            user_uid = supabase.insert_new_user(
                 email=email,
                 username=username,
                 auth_provider="google",
                 avatar=id_info.get("picture"),
             )
 
-        access_token = create_access_token(data={"user_uid": user_uid})
-        refresh_token = create_refresh_token(data={"user_uid": user_uid})
+    access_token = create_access_token(data={"user_uid": user_uid})
+    refresh_token = create_refresh_token(data={"user_uid": user_uid})
 
-        return AuthResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            user_uid=user_uid,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid id_token: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal Server Error, {str(e)}")
+    return AuthResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user_uid=user_uid,
+    )
 
 
 @router.post("/verify-token", response_model=VerificationResponse)
