@@ -16,6 +16,14 @@ class TokenRequest(BaseModel):
     token: str
 
 
+class GoogleOAuthRequest(BaseModel):
+    code: str
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
 class AuthResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -24,7 +32,3 @@ class AuthResponse(BaseModel):
 
 class VerificationResponse(BaseModel):
     user_uid: str
-
-
-class GoogleOAuthRequest(BaseModel):
-    code: str

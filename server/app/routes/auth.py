@@ -1,5 +1,5 @@
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
@@ -8,6 +8,7 @@ from app.schemas import (
     AuthResponse,
     GoogleOAuthRequest,
     LoginRequest,
+    MessageResponse,
     SignupRequest,
     TokenRequest,
     VerificationResponse,
@@ -23,7 +24,7 @@ from app.utils.db import SupabaseTable, supabase_client
 router = APIRouter()
 
 
-@router.post("/signup", response_model=AuthResponse)
+@router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=MessageResponse)
 async def signup(request: SignupRequest):
     """
     Handle normal email/password signup.
@@ -34,24 +35,17 @@ async def signup(request: SignupRequest):
             raise HTTPException(status_code=400, detail="Email already registered")
         if supabase.is_username_exists(username=request.username, auth_provider="email"):
             raise HTTPException(status_code=400, detail="Username already taken")
-        user_uid = supabase.insert_new_user(
+        supabase.insert_new_user(
             email=request.email,
             username=request.username,
             password=request.password,
             auth_provider="email",
         )
 
-    access_token = create_access_token(data={"user_uid": user_uid})
-    refresh_token = create_refresh_token(data={"user_uid": user_uid})
-
-    return AuthResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user_uid=user_uid,
-    )
+    return MessageResponse(message="User created successfully")
 
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login", status_code=status.HTTP_200_OK, response_model=AuthResponse)
 async def login(request: LoginRequest):
     """
     Handle email/password login.
@@ -76,7 +70,7 @@ async def login(request: LoginRequest):
     )
 
 
-@router.post("/google")
+@router.post("/google", status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
 async def continue_with_google(request: GoogleOAuthRequest):
     """
     Handle continue with Google.

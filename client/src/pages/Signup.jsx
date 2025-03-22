@@ -38,9 +38,9 @@ const Signup = () => {
       const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/signup`, values, {
         headers: { "Content-Type": "application/json" },
       });
-      const { access_token, refresh_token, user_uid } = response.data;
-      loginUser(access_token, refresh_token, user_uid);
-      navigate("/dashboard");
+      if (response.status === 201) {
+        navigate("/login");
+      }
     } catch (error) {
       if (error.response && error.response.data) {
         setError(error.response.data.detail || "Something went wrong during signup.");
