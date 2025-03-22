@@ -1,7 +1,5 @@
 import axios from "axios";
-import React, { useState, useEffect } from "react";
-import { createContext } from "react";
-
+import React, { useState, useEffect, createContext } from "react";
 import { setCookie, getCookie } from "../utils/cookies";
 
 export const AuthContext = createContext();
@@ -9,6 +7,7 @@ export const AuthContext = createContext();
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userUid, setUserUid] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const accessToken = getCookie("access_token");
@@ -35,6 +34,7 @@ const useAuth = () => {
               );
               // Set the new access token in cookies
               setCookie("access_token", response.data.access_token);
+              setUserUid(response.data.user_uid);
               setIsAuthenticated(true);
             } catch (refreshError) {
               // Both token verification and refresh failed
@@ -47,16 +47,17 @@ const useAuth = () => {
       } else {
         setIsAuthenticated(false);
       }
+      setLoading(false);
     };
 
     verifyToken();
   }, []);
 
-  return { isAuthenticated, userUid, setIsAuthenticated, setUserUid };
+  return { isAuthenticated, userUid, loading, setIsAuthenticated, setUserUid };
 };
 
 export const AuthProvider = ({ children }) => {
-  const { isAuthenticated, userUid, setIsAuthenticated, setUserUid } = useAuth();
+  const { isAuthenticated, userUid, loading, setIsAuthenticated, setUserUid } = useAuth();
 
   const loginUser = (access_token, refresh_token, user_uid) => {
     setCookie("access_token", access_token);
@@ -65,8 +66,15 @@ export const AuthProvider = ({ children }) => {
     setUserUid(user_uid);
   };
 
+  const logoutUser = () => {
+    setCookie("access_token", "", { expires: -1 });
+    setCookie("refresh_token", "", { expires: -1 });
+    setIsAuthenticated(false);
+    setUserUid(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userUid, loginUser }}>
+    <AuthContext.Provider value={{ isAuthenticated, userUid, loading, loginUser, logoutUser }}>
       {children}
     </AuthContext.Provider>
   );
