@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-from app.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from app.config import GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET
 from app.schemas import (
     AuthResponse,
     GoogleOAuthRequest,
@@ -78,8 +78,8 @@ async def continue_with_google(request: GoogleOAuthRequest):
     token_request_uri = "https://oauth2.googleapis.com/token"
     data = {
         "code": request.code,
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
+        "client_id": GOOGLE_OAUTH_CLIENT_ID,
+        "client_secret": GOOGLE_OAUTH_CLIENT_SECRET,
         "redirect_uri": "postmessage",
         "grant_type": "authorization_code",
     }
@@ -91,7 +91,9 @@ async def continue_with_google(request: GoogleOAuthRequest):
     id_token_value = token_response.get("id_token")
     if not id_token_value:
         raise HTTPException(status_code=400, detail="Missing id_token in response.")
-    id_info = id_token.verify_oauth2_token(id_token_value, requests.Request(), GOOGLE_CLIENT_ID)
+    id_info = id_token.verify_oauth2_token(
+        id_token_value, requests.Request(), GOOGLE_OAUTH_CLIENT_ID
+    )
     email = id_info.get("email")
     with supabase_client() as client:
         supabase = SupabaseTable(client)
