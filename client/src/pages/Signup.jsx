@@ -49,13 +49,11 @@ const Signup = () => {
   const handleSubmit = async (values) => {
     setIsLoading(true);
     try {
-      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/signup`, values, {
+      await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/signup`, values, {
         headers: { "Content-Type": "application/json" },
       });
-      if (response.status === 201) {
-        successNotification("Account created.");
-        navigate("/login");
-      }
+      successNotification("Account created.");
+      navigate("/login");
     } catch (error) {
       errorNotification(error.response.data.detail);
     } finally {

@@ -52,9 +52,7 @@ const Login = () => {
       successNotification("You are now logged in.");
       navigate("/dashboard");
     } catch (error) {
-      if (error.response) {
-        errorNotification(error.response.data.detail);
-      }
+      errorNotification(error.response.data.detail);
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +77,7 @@ const Login = () => {
       }
     },
     onError: () => {
-      // setError("Google login failed. Please try again.");
+      errorNotification("Google login failed. Please try again.");
     },
   });
 
