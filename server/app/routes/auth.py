@@ -120,11 +120,11 @@ async def continue_with_google(request: GoogleOAuthRequest):
 
 
 @router.post("/verify-token", response_model=VerificationResponse)
-async def verify_token(access_token: TokenRequest):
+async def verify_token(request: TokenRequest):
     """
     Verify the access token.
     """
-    payload = validate_token(access_token.token)
+    payload = validate_token(request.token)
     user_uid = payload.get("user_uid")
     return VerificationResponse(
         user_uid=user_uid,
@@ -132,16 +132,16 @@ async def verify_token(access_token: TokenRequest):
 
 
 @router.post("/refresh-token/", response_model=AuthResponse)
-async def refresh_token(refresh_token: TokenRequest):
+async def refresh_token(request: TokenRequest):
     """
     Refresh the access token using a valid refresh token.
     """
-    payload = validate_token(refresh_token.token)
+    payload = validate_token(request.token)
     user_uid = payload.get("user_uid")
     access_token = create_access_token(data={"user_uid": user_uid})
 
     return AuthResponse(
         access_token=access_token,
-        refresh_token=refresh_token.token,
+        refresh_token=request.token,
         user_uid=user_uid,
     )
