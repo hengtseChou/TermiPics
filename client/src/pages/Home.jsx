@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-400 font-mono">
+    <div className="flex flex-col items-center justify-center text-green-400 font-mono">
       <h1 className="text-5xl font-bold mb-4">[ Gary&apos;s Gallery_ ]</h1>
       <p className="text-lg text-green-300 mb-6">_Upload. Share. Organize_</p>
 

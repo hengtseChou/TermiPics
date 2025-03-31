@@ -6,7 +6,7 @@ function Dashboard() {
   const { userUid } = useContext(AuthContext);
 
   return (
-    <div>
+    <div className="text-green-500 font-mono">
       <h1 className="text-3xl text-center">Dashboard</h1>
       <p className="text-center">{userUid}</p>
     </div>

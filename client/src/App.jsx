@@ -18,7 +18,7 @@ function App() {
     <Router>
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID}>
         <AuthProvider>
-          <div className="min-h-screen flex items-center justify-center bg-black text-green-400 font-mono">
+          <div className="min-h-screen flex items-center justify-center bg-black">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/signup" element={<Signup />} />

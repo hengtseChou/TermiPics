@@ -5,8 +5,8 @@ const showToast = (data) => {
 
   const message = (
     <div className="ms-1 text-green-300">
-      <strong className="block text-md font-mono">{title}</strong>
-      <p className="text-sm font-mono">{text}</p>
+      <strong className="block text-md">{title}</strong>
+      <p className="text-sm">{text}</p>
     </div>
   );
 

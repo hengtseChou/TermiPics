@@ -9,8 +9,8 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <PuffLoader color="#10B981" size={150} /> {/* green 500 from tailwindcss */}
+      <div className="flex items-center justify-center">
+        <PuffLoader color="var(--color-green-500)" size={150} />
       </div>
     );
   }

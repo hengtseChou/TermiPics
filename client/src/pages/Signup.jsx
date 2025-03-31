@@ -12,23 +12,21 @@ import { AuthContext } from "../contexts/AuthContext";
 const Signup = () => {
   const { loginUser } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
-  const signupSuccessNotification = () => {
+  const successNotification = (msg) => {
     showToast({
       title: "Success",
-      text: "Redirecting to login page...",
+      text: msg,
       type: "success",
     });
   };
-
-  const loginSuccessNotification = () => {
+  const errorNotification = (msg) => {
     showToast({
-      title: "Success",
-      text: "Redirecting to dashboard...",
-      type: "success",
+      title: "Error",
+      text: msg,
+      type: "error",
     });
   };
 
@@ -50,21 +48,16 @@ const Signup = () => {
 
   const handleSubmit = async (values) => {
     setIsLoading(true);
-    setError("");
     try {
       const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/signup`, values, {
         headers: { "Content-Type": "application/json" },
       });
       if (response.status === 201) {
-        signupSuccessNotification();
+        successNotification("Account created.");
         navigate("/login");
       }
     } catch (error) {
-      if (error.response && error.response.data) {
-        setError(error.response.data.detail || "Something went wrong during signup.");
-      } else {
-        setError("Some error occurred with the server. Please try again later.");
-      }
+      errorNotification(error.response.data.detail);
     } finally {
       setIsLoading(false);
     }
@@ -80,16 +73,16 @@ const Signup = () => {
         });
         const { access_token, refresh_token, user_uid } = authResponse.data;
         loginUser(access_token, refresh_token, user_uid);
-        googleLoginSuccessNotification();
+        successNotification("You are now logged in with Google.");
         navigate("/dashboard");
       } catch (error) {
-        setError("Error occurred while authenticating with Google.");
+        errorNotification("Error occurred while authenticating with Google.");
       } finally {
         setIsLoading(false);
       }
     },
     onError: () => {
-      setError("Google login failed. Please try again.");
+      errorNotification("Google login failed. Please try again.");
     },
   });
 
@@ -143,8 +136,6 @@ const Signup = () => {
               />
               <ErrorMessage name="password" component="div" className="text-rose-500 mt-1" />
             </div>
-            {/* Display Error and Success Messages */}
-            {error && <p className="text-rose-500 mb-4">{error}</p>}
             {/* Submit Button */}
             <button
               type="submit"
@@ -177,7 +168,6 @@ const Signup = () => {
           [ Login ]
         </a>
       </p>
-      <button onClick={signupSuccessNotification}>test</button>
     </div>
   );
 };

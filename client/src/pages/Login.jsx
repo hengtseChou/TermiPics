@@ -12,14 +12,21 @@ import { AuthContext } from "../contexts/AuthContext";
 const Login = () => {
   const { loginUser } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const loginSuccessNotification = () => {
+
+  const successNotification = (msg) => {
     showToast({
       title: "Success",
-      text: "Redirecting to dashboard...",
+      text: msg,
       type: "success",
+    });
+  };
+  const errorNotification = (msg) => {
+    showToast({
+      title: "Error",
+      text: msg,
+      type: "error",
     });
   };
 
@@ -42,11 +49,11 @@ const Login = () => {
       });
       const { access_token, refresh_token, user_uid } = response.data;
       loginUser(access_token, refresh_token, user_uid);
-      loginSuccessNotification();
+      successNotification("You are now logged in.");
       navigate("/dashboard");
     } catch (error) {
       if (error.response) {
-        setError("Some error occurred with the server. Please try again later.");
+        errorNotification(error.response.data.detail);
       }
     } finally {
       setIsLoading(false);
@@ -63,21 +70,21 @@ const Login = () => {
         });
         const { access_token, refresh_token, user_uid } = authResponse.data;
         loginUser(access_token, refresh_token, user_uid);
-        loginSuccessNotification();
+        successNotification("Logged in successfully with Google.");
         navigate("/dashboard");
       } catch (error) {
-        setError("Error occurred while authenticating with Google.");
+        errorNotification("Error occurred while authenticating with Google.");
       } finally {
         setIsLoading(false);
       }
     },
     onError: () => {
-      setError("Google login failed. Please try again.");
+      // setError("Google login failed. Please try again.");
     },
   });
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-400 font-mono">
+    <div className="flex flex-col items-center justify-center text-green-400 font-mono">
       <h1 className="text-4xl font-bold mb-6">[ Login_ ]</h1>
       <Formik
         initialValues={{
@@ -113,8 +120,6 @@ const Login = () => {
               />
               <ErrorMessage name="password" component="div" className="text-rose-500 mt-1" />
             </div>
-            {/* Display Error Messages */}
-            {error && <p className="text-rose-500 mb-4">{error}</p>}
             {/* Submit Button */}
             <button
               type="submit"

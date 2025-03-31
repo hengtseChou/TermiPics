@@ -6,6 +6,5 @@
   --toastify-icon-color-success: var(--color-green-300);
   --toastify-icon-color-warning: var(--color-green-300);
   --toastify-icon-color-error: var(--color-rose-500);
-  --toastify-toast-width: 360px;
   --toastify-toast-padding: 16px;
 }

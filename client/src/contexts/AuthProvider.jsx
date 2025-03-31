@@ -38,24 +38,23 @@ const useAuth = () => {
     }
   };
 
-  const handleAuthentication = async () => {
-    const accessToken = getCookie("access_token");
-    const refreshToken = getCookie("refresh_token");
-
-    if (accessToken) {
-      const isVerified = await verifyAccessToken(accessToken);
-      if (!isVerified && refreshToken) {
-        await refreshAccessToken(refreshToken);
-      }
-    } else if (refreshToken) {
-      await refreshAccessToken(refreshToken);
-    } else {
-      setIsAuthenticated(false);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
+    const handleAuthentication = async () => {
+      const accessToken = getCookie("access_token");
+      const refreshToken = getCookie("refresh_token");
+
+      if (accessToken) {
+        const isVerified = await verifyAccessToken(accessToken);
+        if (!isVerified && refreshToken) {
+          await refreshAccessToken(refreshToken);
+        }
+      } else if (refreshToken) {
+        await refreshAccessToken(refreshToken);
+      } else {
+        setIsAuthenticated(false);
+      }
+      setLoading(false);
+    };
     handleAuthentication();
   }, []);
 
