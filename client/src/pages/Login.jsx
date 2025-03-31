@@ -6,6 +6,7 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
+import showToast from "../components/Notification";
 import { AuthContext } from "../contexts/AuthContext";
 
 const Login = () => {
@@ -14,6 +15,13 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+  const loginSuccessNotification = () => {
+    showToast({
+      title: "Success",
+      text: "Redirecting to dashboard...",
+      type: "success",
+    });
+  };
 
   useEffect(() => {
     document.title = "Login - Gary's Gallery";
@@ -34,6 +42,7 @@ const Login = () => {
       });
       const { access_token, refresh_token, user_uid } = response.data;
       loginUser(access_token, refresh_token, user_uid);
+      loginSuccessNotification();
       navigate("/dashboard");
     } catch (error) {
       if (error.response) {
@@ -54,6 +63,7 @@ const Login = () => {
         });
         const { access_token, refresh_token, user_uid } = authResponse.data;
         loginUser(access_token, refresh_token, user_uid);
+        loginSuccessNotification();
         navigate("/dashboard");
       } catch (error) {
         setError("Error occurred while authenticating with Google.");
@@ -89,7 +99,7 @@ const Login = () => {
                 name="email"
                 className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
               />
-              <ErrorMessage name="email" component="div" className="text-red-500 mt-1" />
+              <ErrorMessage name="email" component="div" className="text-rose-500 mt-1" />
             </div>
             {/* Password Field */}
             <div className="mb-6">
@@ -101,10 +111,10 @@ const Login = () => {
                 name="password"
                 className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
               />
-              <ErrorMessage name="password" component="div" className="text-red-500 mt-1" />
+              <ErrorMessage name="password" component="div" className="text-rose-500 mt-1" />
             </div>
             {/* Display Error Messages */}
-            {error && <p className="text-red-500 mb-4">{error}</p>}
+            {error && <p className="text-rose-500 mb-4">{error}</p>}
             {/* Submit Button */}
             <button
               type="submit"

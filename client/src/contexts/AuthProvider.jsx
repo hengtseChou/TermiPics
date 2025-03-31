@@ -1,4 +1,3 @@
-// src/contexts/AuthProvider.js
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 
@@ -10,46 +9,54 @@ const useAuth = () => {
   const [userUid, setUserUid] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const refreshAccessToken = async (refreshToken) => {
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/refresh-token`, {
+        token: refreshToken,
+      });
+      setCookie("access_token", response.data.access_token);
+      setCookie("refresh_token", response.data.refresh_token);
+      setUserUid(response.data.user_uid);
+      setIsAuthenticated(true);
+      return true;
+    } catch (error) {
+      setIsAuthenticated(false);
+      return false;
+    }
+  };
+
+  const verifyAccessToken = async (accessToken) => {
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/verify-token`, {
+        token: accessToken,
+      });
+      setUserUid(response.data.user_uid);
+      setIsAuthenticated(true);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const handleAuthentication = async () => {
     const accessToken = getCookie("access_token");
     const refreshToken = getCookie("refresh_token");
 
-    const verifyToken = async () => {
-      if (accessToken) {
-        try {
-          const response = await axios.post(
-            `${import.meta.env.VITE_SERVER_URL}/auth/verify-token`,
-            { token: accessToken },
-          );
-          setUserUid(response.data.user_uid);
-          setIsAuthenticated(true);
-        } catch (error) {
-          // Token verification failed, try refreshing with refresh_token
-          if (refreshToken) {
-            try {
-              const response = await axios.post(
-                `${import.meta.env.VITE_SERVER_URL}/auth/refresh-token`,
-                { token: refreshToken },
-              );
-              // Set the new access token in cookies
-              setCookie("access_token", response.data.access_token);
-              setUserUid(response.data.user_uid);
-              setIsAuthenticated(true);
-            } catch (refreshError) {
-              // Both token verification and refresh failed
-              setIsAuthenticated(false);
-            }
-          } else {
-            setIsAuthenticated(false);
-          }
-        }
-      } else {
-        setIsAuthenticated(false);
+    if (accessToken) {
+      const isVerified = await verifyAccessToken(accessToken);
+      if (!isVerified && refreshToken) {
+        await refreshAccessToken(refreshToken);
       }
-      setLoading(false);
-    };
+    } else if (refreshToken) {
+      await refreshAccessToken(refreshToken);
+    } else {
+      setIsAuthenticated(false);
+    }
+    setLoading(false);
+  };
 
-    verifyToken();
+  useEffect(() => {
+    handleAuthentication();
   }, []);
 
   return { isAuthenticated, userUid, loading, setIsAuthenticated, setUserUid };

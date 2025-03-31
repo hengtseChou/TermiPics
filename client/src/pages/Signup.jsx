@@ -6,6 +6,7 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
+import showToast from "../components/Notification";
 import { AuthContext } from "../contexts/AuthContext";
 
 const Signup = () => {
@@ -14,6 +15,22 @@ const Signup = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+
+  const signupSuccessNotification = () => {
+    showToast({
+      title: "Success",
+      text: "Redirecting to login page...",
+      type: "success",
+    });
+  };
+
+  const loginSuccessNotification = () => {
+    showToast({
+      title: "Success",
+      text: "Redirecting to dashboard...",
+      type: "success",
+    });
+  };
 
   useEffect(() => {
     document.title = "Sign Up - Gary's Gallery";
@@ -39,6 +56,7 @@ const Signup = () => {
         headers: { "Content-Type": "application/json" },
       });
       if (response.status === 201) {
+        signupSuccessNotification();
         navigate("/login");
       }
     } catch (error) {
@@ -62,6 +80,7 @@ const Signup = () => {
         });
         const { access_token, refresh_token, user_uid } = authResponse.data;
         loginUser(access_token, refresh_token, user_uid);
+        googleLoginSuccessNotification();
         navigate("/dashboard");
       } catch (error) {
         setError("Error occurred while authenticating with Google.");
@@ -98,7 +117,7 @@ const Signup = () => {
                 name="email"
                 className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
               />
-              <ErrorMessage name="email" component="div" className="text-red-500 mt-1" />
+              <ErrorMessage name="email" component="div" className="text-rose-500 mt-1" />
             </div>
             {/* Username Field */}
             <div className="mb-4">
@@ -110,7 +129,7 @@ const Signup = () => {
                 name="username"
                 className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
               />
-              <ErrorMessage name="username" component="div" className="text-red-500 mt-1" />
+              <ErrorMessage name="username" component="div" className="text-rose-500 mt-1" />
             </div>
             {/* Password Field */}
             <div className="mb-6">
@@ -122,10 +141,10 @@ const Signup = () => {
                 name="password"
                 className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
               />
-              <ErrorMessage name="password" component="div" className="text-red-500 mt-1" />
+              <ErrorMessage name="password" component="div" className="text-rose-500 mt-1" />
             </div>
             {/* Display Error and Success Messages */}
-            {error && <p className="text-red-500 mb-4">{error}</p>}
+            {error && <p className="text-rose-500 mb-4">{error}</p>}
             {/* Submit Button */}
             <button
               type="submit"
@@ -158,6 +177,7 @@ const Signup = () => {
           [ Login ]
         </a>
       </p>
+      <button onClick={signupSuccessNotification}>test</button>
     </div>
   );
 };

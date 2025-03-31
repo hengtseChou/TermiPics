@@ -4,7 +4,6 @@ const cookieConfig = {
   path: "/",
   secure: window.location.protocol === "https:",
   sameSite: "Strict",
-  httpOnly: false,
 };
 
 const setCookie = (name, value) => {

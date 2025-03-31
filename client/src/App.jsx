@@ -2,6 +2,7 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthProvider";
@@ -15,7 +16,7 @@ library.add(faGoogle);
 function App() {
   return (
     <Router>
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID}>
         <AuthProvider>
           <div className="min-h-screen flex items-center justify-center bg-black text-green-400 font-mono">
             <Routes>
@@ -31,6 +32,7 @@ function App() {
                 }
               />
             </Routes>
+            <ToastContainer />
           </div>
         </AuthProvider>
       </GoogleOAuthProvider>
