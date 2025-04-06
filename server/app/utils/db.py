@@ -10,6 +10,7 @@ from supabase import create_client
 from supabase.client import Client as SupabaseClient
 
 from app.config import SUPABASE_KEY, SUPABASE_URL
+from app.models import User
 from app.utils.auth import hash_password
 
 
@@ -101,30 +102,30 @@ class SupabaseTable(TableOperator):
             if not password:
                 raise ValueError("Password is required for email registration")
             hashed_password = hash_password(password)
-            new_user = {
-                "user_uid": user_uid,
-                "email": email,
-                "username": username,
-                "password": hashed_password,
-                "auth_provider": "email",
-                "created_at": created_at,
-                "last_active": last_active,
-            }
+            new_user = User(
+                user_uid=user_uid,
+                email=email,
+                username=username,
+                password=hashed_password,
+                auth_provider="email",
+                created_at=created_at,
+                last_active=last_active,
+            )
         elif auth_provider == "google":
-            new_user = {
-                "user_uid": user_uid,
-                "email": email,
-                "username": username,
-                "auth_provider": "google",
-                "created_at": created_at,
-                "last_active": last_active,
-                "avatar": avatar,
-            }
+            new_user = User(
+                user_uid=user_uid,
+                email=email,
+                username=username,
+                auth_provider="google",
+                created_at=created_at,
+                last_active=last_active,
+                avatar=avatar,
+            )
         else:
             raise ValueError("Invalid auth provider")
 
         try:
-            self.client.table("users").insert(new_user).execute()
+            self.client.table("users").insert(new_user.to_dict()).execute()
         except APIError:
             raise HTTPException(status_code=500, detail="Error connecting to database")
 
