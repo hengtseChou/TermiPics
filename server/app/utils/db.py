@@ -59,6 +59,10 @@ class TableOperator(ABC):
     def get_user_uid(self, email: str, auth_provider: str) -> Optional[str]:
         pass
 
+    @abstractmethod
+    def get_user_info_by_keys(self, user_uid: str, keys: list[str]) -> int:
+        pass
+
 
 class SupabaseTable(TableOperator):
 
@@ -150,8 +154,10 @@ class SupabaseTable(TableOperator):
             )
         except APIError:
             raise HTTPException(status_code=500, detail="Error connecting to database")
+        if not response.data:
+            raise HTTPException(status_code=404, detail="User not found")
 
-        return response.data[0] if response.data else {}
+        return response.data[0]
 
     def get_user_uid(self, email: str, auth_provider: str) -> Optional[str]:
         try:
@@ -164,5 +170,17 @@ class SupabaseTable(TableOperator):
             )
         except APIError:
             raise HTTPException(status_code=500, detail="Error connecting to database")
+        if not response.data:
+            raise HTTPException(status_code=404, detail="User not found")
 
-        return response.data[0]["user_uid"] if response.data else None
+        return response.data[0]["user_uid"]
+
+    def get_user_info_by_keys(self, user_uid: str, keys: list[str]) -> dict:
+        try:
+            response = self.client.table("users").select(*keys).eq("user_uid", user_uid).execute()
+        except APIError:
+            raise HTTPException(status_code=500, detail="Error connecting to database")
+        if not response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {key: response.data[0].get(key) for key in keys}

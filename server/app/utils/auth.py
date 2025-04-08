@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 import jwt
-from fastapi import HTTPException
+from fastapi import Header, HTTPException
 from passlib.context import CryptContext
 
 from app.config import (
@@ -63,3 +64,17 @@ def validate_token(token: str) -> dict:
     if datetime.now(timezone.utc) > datetime.fromtimestamp(payload["exp"], timezone.utc):
         raise HTTPException(status_code=401, detail="Token has expired")
     return payload
+
+
+def get_access_token(authorization: Optional[str] = Header(None)) -> str:
+    """
+    Dependency to extract the Bearer token from the Authorization header
+    """
+    if authorization is None:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    token_parts = authorization.split(" ")
+    if len(token_parts) != 2 or token_parts[0] != "Bearer":
+        raise HTTPException(status_code=401, detail="Invalid authorization format")
+
+    return token_parts[1]  # Return the access token
