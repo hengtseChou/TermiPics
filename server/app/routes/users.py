@@ -14,6 +14,6 @@ async def get_user_info(keys: str, access_token: str = Depends(get_access_token)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     with supabase_client() as client:
         supabase = SupabaseTable(client)
-        keys = keys.split("&")
+        keys = keys.split(",")
         user_data = supabase.get_user_info_by_keys(user_uid, keys)
     return JSONResponse(user_data)
