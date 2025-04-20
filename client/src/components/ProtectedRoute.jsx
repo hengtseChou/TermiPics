@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import { Navigate } from "react-router-dom";
+
 import { PuffLoader } from "react-spinners";
 
 import showToast from "../components/Notification";
@@ -20,7 +21,7 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="flex justify-center items-center bg-black min-h-screen">
         <PuffLoader color="var(--color-green-500)" size={150} />
       </div>
     );

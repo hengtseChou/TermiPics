@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
+
 import axios from "axios";
+
 import { getCookie } from "../utils/cookies";
 
 function Navbar() {
@@ -35,9 +37,8 @@ function Navbar() {
       }
     };
     fetchUserInfo();
-  }, []);
+  }, [accessToken]);
 
-  // Handle clicks outside of the dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!dropdownOpen || avatarRef.current?.contains(event.target)) {
@@ -59,12 +60,12 @@ function Navbar() {
   };
 
   return (
-    <div className="bg-black text-green-500 font-mono p-4">
-      <nav className="border-1 border-green-700 p-4">
+    <div className="bg-black p-4 font-mono text-green-500">
+      <nav className="p-4 border-1 border-green-700">
         <div className="flex justify-between items-center">
-          <div className="text-xl ps-3">
+          <div className="ps-3 text-xl">
             {loading ? (
-              <div className="w-50 h-6 bg-green-500/50 rounded-md animate-pulse" />
+              <div className="bg-green-500/50 rounded-md w-50 h-6 animate-pulse" />
             ) : (
               <Link
                 to="/dashboard"
@@ -74,20 +75,20 @@ function Navbar() {
               </Link>
             )}
           </div>
-          <div className="space-x-4 flex items-center pe-3">
+          <div className="flex items-center space-x-4 pe-3">
             <div className="relative">
               {loading ? (
-                <div className="w-10 h-10 rounded-full bg-gray-800 animate-pulse" />
+                <div className="bg-gray-800 rounded-full w-10 h-10 animate-pulse" />
               ) : (
                 <div ref={avatarRef} onClick={toggleDropdown} className="relative">
                   {user.avatar ? (
                     <img
                       src={user.avatar}
                       alt="Avatar"
-                      className="w-10 h-10 rounded-full hover:ring-2 hover:ring-green-700 cursor-pointer"
+                      className="rounded-full hover:ring-2 hover:ring-green-700 w-10 h-10 cursor-pointer"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:ring-2 hover:ring-green-700 cursor-pointer">
+                    <div className="flex justify-center items-center bg-gray-800 rounded-full hover:ring-2 hover:ring-green-700 w-10 h-10 cursor-pointer">
                       <span className="text-green-300">?</span>
                     </div>
                   )}
@@ -96,16 +97,16 @@ function Navbar() {
               {dropdownOpen && !loading && (
                 <div
                   ref={dropdownRef}
-                  className="absolute right-0 mt-2 w-48 bg-gray-900 border border-green-700 rounded-md shadow-lg z-10"
+                  className="right-0 z-10 absolute bg-gray-900 shadow-lg mt-2 border border-green-700 rounded-md w-48"
                 >
                   <ul className="py-1">
-                    <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
-                      <Link to="/settings" className="text-green-300 block w-full">
+                    <li className="hover:bg-gray-800 px-4 py-2 cursor-pointer">
+                      <Link to="/settings" className="block w-full text-green-300">
                         Settings
                       </Link>
                     </li>
-                    <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
-                      <Link to="/logout" className="text-green-300 block w-full">
+                    <li className="hover:bg-gray-800 px-4 py-2 cursor-pointer">
+                      <Link to="/logout" className="block w-full text-green-300">
                         Logout
                       </Link>
                     </li>

@@ -1,9 +1,11 @@
+import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { Formik, Field, Form, ErrorMessage } from "formik";
-import { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
 import showToast from "../components/Notification";
@@ -82,9 +84,9 @@ const Login = () => {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <div className="flex flex-col items-center justify-center text-green-500 font-mono">
-        <h1 className="text-4xl font-bold mb-6">[ Login_ ]</h1>
+    <div className="flex justify-center items-center bg-black min-h-screen">
+      <div className="flex flex-col justify-center items-center font-mono text-green-500">
+        <h1 className="mb-6 font-bold text-4xl">[ Login_ ]</h1>
         <Formik
           initialValues={{
             email: "",
@@ -94,7 +96,7 @@ const Login = () => {
           onSubmit={handleSubmit}
         >
           {({ isSubmitting }) => (
-            <Form className="w-[24rem] max-w-full bg-gray-900 p-6 rounded-lg shadow-lg border border-green-500">
+            <Form className="bg-gray-900 shadow-lg p-6 border border-green-500 rounded-lg w-[24rem] max-w-full">
               {/* Email Field */}
               <div className="mb-4">
                 <label htmlFor="email" className="text-green-300">
@@ -103,9 +105,9 @@ const Login = () => {
                 <Field
                   type="email"
                   name="email"
-                  className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="bg-gray-800 mt-1 p-2 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full text-green-300"
                 />
-                <ErrorMessage name="email" component="div" className="text-rose-500 mt-1" />
+                <ErrorMessage name="email" component="div" className="mt-1 text-rose-500" />
               </div>
               {/* Password Field */}
               <div className="mb-6">
@@ -115,15 +117,15 @@ const Login = () => {
                 <Field
                   type="password"
                   name="password"
-                  className="w-full mt-1 p-2 bg-gray-800 text-green-300 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="bg-gray-800 mt-1 p-2 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full text-green-300"
                 />
-                <ErrorMessage name="password" component="div" className="text-rose-500 mt-1" />
+                <ErrorMessage name="password" component="div" className="mt-1 text-rose-500" />
               </div>
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSubmitting || isLoading}
-                className="w-full py-2 bg-green-500 text-black rounded-lg hover:bg-green-600 transition"
+                className="bg-green-500 hover:bg-green-600 py-2 rounded-lg w-full text-black transition"
               >
                 {isLoading ? "Logging In..." : "[ Log_In ]"}
               </button>
@@ -132,20 +134,20 @@ const Login = () => {
         </Formik>
 
         <div className="flex items-center my-6 w-full">
-          <div className="flex-grow h-px bg-green-500"></div>
+          <div className="flex-grow bg-green-500 h-px"></div>
           <span className="mx-4">or</span>
-          <div className="flex-grow h-px bg-green-500"></div>
+          <div className="flex-grow bg-green-500 h-px"></div>
         </div>
 
         <button
           onClick={() => handleGoogleLogin()}
-          className="w-full py-2 mb-6 bg-gray-900 text-green-300 rounded-lg hover:bg-gray-800 transition flex items-center justify-center space-x-3"
+          className="flex justify-center items-center space-x-3 bg-gray-900 hover:bg-gray-800 mb-6 py-2 rounded-lg w-full text-green-300 transition"
         >
-          <FontAwesomeIcon icon={["fab", "google"]} className="text-xl" />
+          <FontAwesomeIcon icon={faGoogle} className="text-xl" />
           <span>[ Continue_With_Google ]</span>
         </button>
 
-        <p className="mt-4 text-xs text-green-500">
+        <p className="mt-4 text-green-500 text-xs">
           Don&apos;t have an account yet?{" "}
           <a href="/signup" className="text-green-300 hover:underline">
             [ Sign Up ]

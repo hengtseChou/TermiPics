@@ -1,5 +1,6 @@
-import axios from "axios";
 import React, { useState, useEffect } from "react";
+
+import axios from "axios";
 
 import { AuthContext } from "./AuthContext";
 import { setCookie, getCookie } from "../utils/cookies";
