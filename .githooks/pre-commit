@@ -5,7 +5,7 @@ staged_files=$(git diff --cached --name-only)
 echo "[pre-commit] Running pre-commit hook"
 echo "[pre-commit] Checking frontend code"
 cd client
-linter_output=$(npx eslint)
+linter_output=$(npx eslint .)
 if [ -n "$linter_output" ]; then
   echo "[pre-commit] ESLint found issues below:"
   echo "$linter_output"
@@ -17,13 +17,17 @@ if [ -n "$linter_output" ]; then
   fi
 fi
 echo "[pre-commit] Formatting frontend code"
-npx eslint --fix --quiet src vite.config.js eslint.config.js
+npx eslint . --fix --quiet
 prettier src vite.config.js eslint.config.js --print-width 100 -w
 echo "[pre-commit] Formatting backend code"
 cd ../server
 isort app
 black app -l 100
 cd ..
-echo "[pre-commit] Staging formatted files"
-git add ${staged_files[@]}
+if [ -z "$staged_files" ]; then
+  echo "[pre-commit] No files staged for commit"
+else
+  echo "[pre-commit] Staging formatted files"
+  git add ${staged_files[@]}
+fi
 echo "[pre-commit] Done"

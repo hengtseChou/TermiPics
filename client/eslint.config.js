@@ -35,12 +35,23 @@ export default [
       "import/order": [
         "warn",
         {
-          groups: [["builtin", "external"], ["internal", "sibling", "parent"], ["index"]],
+          groups: [
+            ["builtin", "external"],
+            ["internal", "sibling", "parent", "index"],
+          ],
           "newlines-between": "always",
           alphabetize: {
             order: "asc",
             caseInsensitive: true,
           },
+          pathGroups: [
+            {
+              pattern: "{react,react-dom,react-router,react-router-dom}",
+              group: "external",
+              position: "before",
+            },
+          ],
+          pathGroupsExcludedImportTypes: ["react"],
         },
       ],
       "react/prop-types": "off",
