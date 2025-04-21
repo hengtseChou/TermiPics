@@ -18,7 +18,6 @@ if [ -n "$linter_output" ]; then
 fi
 echo "[pre-commit] Formatting frontend code"
 npx eslint . --fix --quiet
-prettier src vite.config.js eslint.config.js --print-width 100 -w
 echo "[pre-commit] Formatting backend code"
 cd ../server
 isort app
