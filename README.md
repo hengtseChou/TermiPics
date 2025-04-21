@@ -1,1 +1,1 @@
-# Gary's Gallery
+# TermiPics

@@ -1,16 +1,17 @@
 [project]
 name = "server"
 version = "0.1.0"
-description = "Server side for Gary's Gallery."
+description = "Server side for TermiPics."
 requires-python = ">=3.13"
 dependencies = [
     "bcrypt==4.0.1",
     "fastapi[standard]>=0.115.8",
-    "google-auth>=2.38.0",
+    "google-auth>=2.39.0",
     "itsdangerous>=2.2.0",
     "passlib>=1.7.4",
     "pyjwt>=2.10.1",
-    "python-dotenv>=1.0.1",
+    "pymongo>=4.12.0",
+    "python-dotenv>=1.1.0",
     "requests>=2.32.3",
-    "supabase>=2.13.0",
+    "supabase>=2.15.0",
 ]

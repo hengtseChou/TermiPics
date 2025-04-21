@@ -33,7 +33,7 @@ const Signup = () => {
   };
 
   useEffect(() => {
-    document.title = "Sign Up - Gary's Gallery";
+    document.title = "Sign Up - TermiPics";
   }, []);
 
   const validationSchema = Yup.object({

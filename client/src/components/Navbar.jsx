@@ -71,7 +71,7 @@ function Navbar() {
                 to="/dashboard"
                 className="font-bold hover:text-green-300 hover:underline cursor-pointer"
               >
-                Gary&apos;s Gallery / {user.username}
+                TermiPics / {user.username}
               </Link>
             )}
           </div>

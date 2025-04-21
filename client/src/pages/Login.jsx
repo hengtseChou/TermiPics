@@ -33,7 +33,7 @@ const Login = () => {
   };
 
   useEffect(() => {
-    document.title = "Login - Gary's Gallery";
+    document.title = "Login - TermiPics";
   }, []);
 
   const validationSchema = Yup.object({

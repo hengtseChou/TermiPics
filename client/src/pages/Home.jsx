@@ -4,7 +4,7 @@ function Home() {
   return (
     <div className="flex justify-center items-center bg-black min-h-screen">
       <div className="flex flex-col justify-center items-center font-mono text-green-500">
-        <h1 className="mb-4 font-bold text-5xl">[ Gary&apos;s Gallery_ ]</h1>
+        <h1 className="mb-4 font-bold text-5xl">[ TermiPics_ ]</h1>
         <p className="mb-6 text-green-300 text-lg">_Upload. Share. Organize_</p>
         <div className="flex space-x-4">
           <Link
