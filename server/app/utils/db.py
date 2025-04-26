@@ -72,11 +72,7 @@ class SupabaseTable(TableOperator):
 
     def is_email_exists(self, email: str, auth_provider: str) -> bool:
         response = (
-            self.client.table("users")
-            .select("email")
-            .eq("email", email)
-            .eq("auth_provider", auth_provider)
-            .execute()
+            self.client.table("users").select("email").eq("email", email).eq("auth_provider", auth_provider).execute()
         )
         return len(response.data) > 0
 
@@ -138,20 +134,13 @@ class SupabaseTable(TableOperator):
     def update_last_active(self, user_uid: str) -> None:
         last_active = datetime.now(timezone.utc).isoformat()
         try:
-            self.client.table("users").update({"last_active": last_active}).eq(
-                "user_uid", user_uid
-            ).execute()
+            self.client.table("users").update({"last_active": last_active}).eq("user_uid", user_uid).execute()
         except APIError:
             raise HTTPException(status_code=500, detail="Error connecting to database")
 
     def get_user_creds(self, email: str) -> dict:
         try:
-            response = (
-                self.client.table("users")
-                .select("user_uid", "password")
-                .eq("email", email)
-                .execute()
-            )
+            response = self.client.table("users").select("user_uid", "password").eq("email", email).execute()
         except APIError:
             raise HTTPException(status_code=500, detail="Error connecting to database")
         if not response.data:

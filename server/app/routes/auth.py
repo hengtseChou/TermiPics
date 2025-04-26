@@ -13,12 +13,7 @@ from app.schemas import (
     TokenRequest,
     VerificationResponse,
 )
-from app.utils.auth import (
-    create_access_token,
-    create_refresh_token,
-    validate_token,
-    verify_password,
-)
+from app.utils.auth import create_access_token, create_refresh_token, validate_token, verify_password
 from app.utils.db import SupabaseTable, supabase_client
 
 router = APIRouter()
@@ -91,9 +86,7 @@ async def continue_with_google(request: GoogleOAuthRequest):
     id_token_value = token_response.get("id_token")
     if not id_token_value:
         raise HTTPException(status_code=400, detail="Missing id_token in response.")
-    id_info = id_token.verify_oauth2_token(
-        id_token_value, requests.Request(), GOOGLE_OAUTH_CLIENT_ID
-    )
+    id_info = id_token.verify_oauth2_token(id_token_value, requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
     email = id_info.get("email")
     with supabase_client() as client:
         supabase = SupabaseTable(client)
