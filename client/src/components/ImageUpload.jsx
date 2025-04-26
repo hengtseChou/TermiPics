@@ -1,14 +1,24 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import { X, Upload, Image } from "lucide-react";
+import { Image, Upload, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
-function Modal({ isOpen, onClose, onUpload }) {
+function Modal({ isOpened, onClose, onUpload }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [labels, setLabels] = useState("");
+
+  // isOpened: A prop passed from the parent component that controls whether the modal should be shown or hidden
+  // isVisible: A local state that determines if the modal is actually rendered in the DOM
+  const [isVisible, setIsVisible] = useState(false);
+  const ANIMATION_STATES = {
+    ENTER: "enter",
+    LEAVE: "leave",
+    IDLE: null,
+  };
+  const [animation, setAnimation] = useState(ANIMATION_STATES.IDLE);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -23,9 +33,21 @@ function Modal({ isOpen, onClose, onUpload }) {
     },
   });
 
+  useEffect(() => {
+    if (isOpened) {
+      setIsVisible(true);
+      setAnimation(ANIMATION_STATES.ENTER);
+    }
+  }, [isOpened]);
+
   const handleClose = () => {
-    onClose();
-    resetForm();
+    setAnimation(ANIMATION_STATES.LEAVE);
+    setTimeout(() => {
+      onClose(); // Notify parent component to close the modal
+      resetForm();
+      setIsVisible(false);
+      setAnimation(ANIMATION_STATES.IDLE);
+    }, 300);
   };
 
   const resetForm = () => {
@@ -45,16 +67,23 @@ function Modal({ isOpen, onClose, onUpload }) {
     });
   };
 
-  if (!isOpen) return null;
+  if (!isVisible && !isOpened) return null;
 
   return (
-    <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70">
+    <div
+      className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 duration-300 animation-opacity"
+      style={{ opacity: animation === ANIMATION_STATES.ENTER ? "1" : "0" }}
+    >
       {/* Modal container */}
-      <div className="bg-gray-900 mx-4 border border-green-700 rounded-lg w-full max-w-md overflow-hidden">
+      <div
+        className={`bg-gray-900 mx-4 border border-green-700 rounded-lg w-full max-w-md overflow-hidden animation-all duration-300 transform ${
+          animation === ANIMATION_STATES.ENTER ? "scale-100 opacity-100" : "scale-90 opacity-0"
+        }`}
+      >
         {/* Modal header */}
         <div className="flex justify-between items-center px-6 py-4 border-green-700 border-b">
           <h3 className="font-medium text-green-500 text-lg">Upload Image</h3>
-          <button onClick={handleClose} className="text-green-500 hover:text-green-400 transition-colors">
+          <button onClick={handleClose} className="text-green-500 hover:text-green-400 animation-colors">
             <X size={20} />
           </button>
         </div>
@@ -64,15 +93,15 @@ function Modal({ isOpen, onClose, onUpload }) {
           {!file ? (
             <div
               {...getRootProps()}
-              className={`border border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+              className={`border border-dashed rounded-lg p-6 text-center cursor-pointer animation-colors ${
                 isDragActive ? "border-green-500 bg-gray-800" : "border-green-700 hover:border-green-600"
               }`}
             >
               <input {...getInputProps()} />
               <div className="flex flex-col justify-center items-center space-y-2">
-                <Image className="w-12 h-12 text-green-400" />
-                <p className="text-green-500 text-sm">Drag and drop your image here, or click to select</p>
-                <p className="text-green-700 text-xs">Supported formats: JPG, PNG, GIF</p>
+                <Image className="w-12 h-12 text-green-300" />
+                <p className="text-green-300 text-sm">Drag and drop your image here, or click to select</p>
+                <p className="text-green-500 text-xs">Supported formats: JPG, PNG, GIF</p>
               </div>
             </div>
           ) : (
@@ -134,7 +163,7 @@ function Modal({ isOpen, onClose, onUpload }) {
               !title || !file
                 ? "bg-gray-700 cursor-not-allowed text-gray-500"
                 : "bg-gray-800 hover:bg-gray-700 text-green-300 hover:cursor-pointer"
-            } transition-colors`}
+            } animation-colors`}
           >
             <Upload size={16} className="mr-2" />
             Upload

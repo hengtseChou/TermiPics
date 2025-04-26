@@ -12,7 +12,7 @@ function Dashboard() {
   const [imageCount, setImageCount] = useState(null);
   const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpened, setIsModalOpened] = useState(false);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -32,11 +32,11 @@ function Dashboard() {
   }, []);
 
   const openModal = () => {
-    setIsModalOpen(true);
+    setIsModalOpened(true);
   };
 
   const closeModal = () => {
-    setIsModalOpen(false);
+    setIsModalOpened(false);
   };
 
   const handleImageUpload = async (imageData) => {
@@ -122,7 +122,7 @@ function Dashboard() {
           )}
         </div>
       </div>
-      <Modal isOpen={isModalOpen} onClose={closeModal} onUpload={handleImageUpload} />
+      <Modal isOpened={isModalOpened} onClose={closeModal} onUpload={handleImageUpload} />
     </div>
   );
 }
