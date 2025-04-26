@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 
-import { Image, Upload, X } from "lucide-react";
+import { Image as ImageIcon, Upload, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
 function Modal({ isOpened, onClose, onUpload }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [fileSize, setFileSize] = useState(0);
+
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [labels, setLabels] = useState("");
 
   // isOpened: A prop passed from the parent component that controls whether the modal should be shown or hidden
@@ -27,9 +29,19 @@ function Modal({ isOpened, onClose, onUpload }) {
     onDrop: (acceptedFiles) => {
       const selectedFile = acceptedFiles[0];
       setFile(selectedFile);
+      setFileSize(selectedFile.size);
 
       const objectUrl = URL.createObjectURL(selectedFile);
       setPreview(objectUrl);
+
+      const img = new Image();
+      img.onload = () => {
+        setDimensions({
+          width: img.width,
+          height: img.height,
+        });
+      };
+      img.src = objectUrl;
     },
   });
 
@@ -54,15 +66,14 @@ function Modal({ isOpened, onClose, onUpload }) {
     setFile(null);
     setPreview(null);
     setTitle("");
-    setDescription("");
     setLabels("");
+    setDimensions({ width: 0, height: 0 });
   };
 
   const handleUpload = () => {
     onUpload({
       file,
       title,
-      description,
       labels,
     });
   };
@@ -99,7 +110,7 @@ function Modal({ isOpened, onClose, onUpload }) {
             >
               <input {...getInputProps()} />
               <div className="flex flex-col justify-center items-center space-y-2">
-                <Image className="w-12 h-12 text-green-300" />
+                <ImageIcon className="w-12 h-12 text-green-300" />
                 <p className="text-green-300 text-sm">Drag and drop your image here, or click to select</p>
                 <p className="text-green-500 text-xs">Supported formats: JPG, PNG, GIF</p>
               </div>
@@ -114,17 +125,6 @@ function Modal({ isOpened, onClose, onUpload }) {
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
-                    placeholder=""
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1 font-medium text-green-300 text-sm">Description</label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows="2"
                     className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
                     placeholder=""
                   />
@@ -147,7 +147,11 @@ function Modal({ isOpened, onClose, onUpload }) {
                 <p className="mb-2 font-medium text-green-300 text-sm">Preview</p>
                 <div className="p-2 border border-green-700 rounded-md">
                   <img src={preview} alt="Preview" className="w-full max-h-48 object-contain" />
-                  <p className="mt-1 text-green-700 text-xs text-center">{file.name}</p>
+                  <p className="mt-1 text-green-700 text-xs text-center">
+                    {file.name}{" "}
+                    {dimensions.width > 0 &&
+                      `(${dimensions.width}×${dimensions.height}px, ${Math.round(fileSize / 1000 / 100) / 10} MB)`}
+                  </p>
                 </div>
               </div>
             </div>
