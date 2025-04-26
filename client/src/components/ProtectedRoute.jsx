@@ -12,8 +12,8 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     if (!isAuthenticated && !loading) {
       showToast({
-        title: "Unauthorized",
-        text: "You must be logged in to access this page.",
+        title: "Access Denied",
+        msg: "Your session is invalid or has expired. Please log in again.",
         type: "error",
       });
     }

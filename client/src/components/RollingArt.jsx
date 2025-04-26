@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function RollingAsciiAnimation() {
   const [position, setPosition] = useState(0);
   const containerRef = useRef(null);
 
-  // The ASCII art (isometric pattern)
   const asciiArt = `> make build
 Compiling...
 Compiling...
@@ -65,50 +64,29 @@ Container started.
 Container started...
 
 `;
-
-  // Define the number of visible lines (40 lines)
   const visibleLines = 50;
+  const maxHeight = asciiArt.split("\n").length;
 
-  // Calculate the total number of lines in the ASCII art
-  const calculateMaxHeight = () => {
-    return asciiArt.split("\n").length;
-  };
-
-  // Create duplicated ASCII art for seamless looping
-  const createDuplicatedArt = () => {
-    return asciiArt + "\n" + asciiArt; // Concatenate the art to create a continuous effect
-  };
-
-  // Create the animation frame with the current position (vertical scrolling)
   const createAnimationFrame = () => {
-    const duplicatedArt = createDuplicatedArt();
+    const duplicatedArt = asciiArt + "\n" + asciiArt;
     const lines = duplicatedArt.split("\n");
-    const totalHeight = calculateMaxHeight();
-
-    // For vertical scrolling, slice the lines based on the position
     return lines.slice(position, position + visibleLines).join("\n");
   };
 
+  // Animation loop
   useEffect(() => {
-    // Animation loop
     const intervalId = setInterval(() => {
       setPosition((prevPos) => {
         const nextPos = prevPos + 1;
-        // Ensure the scroll position loops back to the start after reaching the end
-        return nextPos >= calculateMaxHeight() ? 0 : nextPos;
+        return nextPos >= maxHeight ? 0 : nextPos;
       });
-    }, 300); // Adjusted speed for smoother vertical scroll
-
+    }, 300);
     return () => clearInterval(intervalId);
   }, []);
 
   return (
     <div className="flex justify-center items-start w-full h-full">
-      <div
-        ref={containerRef}
-        className="overflow-hidden"
-        style={{ height: `${visibleLines * 1}em` }} // Adjust container height to 40 lines
-      >
+      <div ref={containerRef} className="overflow-hidden" style={{ height: `${visibleLines}em` }}>
         <pre className="font-mono text-green-500 text-xs sm:text-sm whitespace-pre">
           {createAnimationFrame()}
         </pre>

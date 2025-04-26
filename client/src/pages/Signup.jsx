@@ -5,7 +5,7 @@ import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
-import { Formik, Field, Form, ErrorMessage } from "formik";
+import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 
 import showToast from "../components/Notification";
@@ -16,21 +16,6 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
-
-  const successNotification = (msg) => {
-    showToast({
-      title: "Success",
-      text: msg,
-      type: "success",
-    });
-  };
-  const errorNotification = (msg) => {
-    showToast({
-      title: "Error",
-      text: msg,
-      type: "error",
-    });
-  };
 
   useEffect(() => {
     document.title = "Sign Up - TermiPics";
@@ -54,10 +39,18 @@ const Signup = () => {
       await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/signup`, values, {
         headers: { "Content-Type": "application/json" },
       });
-      successNotification("Account created.");
+      showToast({
+        title: "Success",
+        msg: "Account created.",
+        type: "success",
+      });
       navigate("/login");
     } catch (error) {
-      errorNotification(error.response.data.detail);
+      showToast({
+        title: "Error",
+        msg: error.response.data.detail,
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -73,16 +66,28 @@ const Signup = () => {
         });
         const { access_token, refresh_token, user_uid } = authResponse.data;
         loginUser(access_token, refresh_token, user_uid);
-        successNotification("You are now logged in with Google.");
+        showToast({
+          title: "Success",
+          msg: "You are now logged in with Google.",
+          type: "success",
+        });
         navigate("/dashboard");
       } catch (error) {
-        errorNotification("Error occurred while authenticating with Google.");
+        showToast({
+          title: "Error",
+          msg: "Error occurred while authenticating with Google.",
+          type: "error",
+        });
       } finally {
         setIsLoading(false);
       }
     },
     onError: () => {
-      errorNotification("Google login failed. Please try again.");
+      showToast({
+        title: "Error",
+        msg: "Google login failed. Please try again.",
+        type: "error",
+      });
     },
   });
 

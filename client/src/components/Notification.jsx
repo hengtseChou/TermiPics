@@ -1,12 +1,12 @@
 import { toast } from "react-toastify";
 
 const showToast = (data) => {
-  const { title, text, type } = data;
+  const { title, msg, type } = data;
 
-  const message = (
+  const body = (
     <div className="ms-1 text-green-300">
       <strong className="block text-md">{title}</strong>
-      <p className="text-sm">{text}</p>
+      <p className="text-sm">{msg}</p>
     </div>
   );
 
@@ -19,21 +19,21 @@ const showToast = (data) => {
   };
 
   switch (type) {
-    case "success":
-      toast.success(message, options);
-      break;
-    case "error":
-      toast.error(message, options);
-      break;
-    case "info":
-      toast.info(message, options);
-      break;
-    case "warning":
-      toast.warning(message, options);
-      break;
-    default:
-      toast(message, options);
+  case "success":
+    toast.success(body, options);
+    break;
+  case "error":
+    toast.error(body, options);
+    break;
+  case "info":
+    toast.info(body, options);
+    break;
+  case "warning":
+    toast.warning(body, options);
+    break;
+  default:
+    toast(body, options);
   }
 };
 
-export default showToast; // Ensure this is the default export
+export default showToast;

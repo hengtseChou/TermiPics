@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import axios from "axios";
 
+import showToast from "../components/Notification";
 import { getCookie } from "../utils/cookies";
 
 function Navbar() {
@@ -22,22 +23,26 @@ function Navbar() {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          },
+          }
         );
         const data = response.data;
         setUser({
           username: data.username,
           avatar: data.avatar || null,
         });
-        console.log("User info fetched:", data);
       } catch (error) {
-        console.error("Error fetching user info:", error);
+        showToast({
+          title: "Error",
+          msg: "Unable to load user information.",
+          type: "error",
+        });
+        setUser({ username: "error", avatar: null });
       } finally {
         setLoading(false);
       }
     };
     fetchUserInfo();
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -67,12 +72,21 @@ function Navbar() {
             {loading ? (
               <div className="bg-green-500/50 rounded-md w-50 h-6 animate-pulse" />
             ) : (
-              <Link
-                to="/dashboard"
-                className="font-bold hover:text-green-300 hover:underline cursor-pointer"
-              >
-                TermiPics / {user.username}
-              </Link>
+              <>
+                <Link
+                  to="/"
+                  className="font-bold hover:text-green-300 hover:underline cursor-pointer"
+                >
+                  TermiPics
+                </Link>
+                <span className="mx-2">/</span>
+                <Link
+                  to="/dashboard"
+                  className="font-bold hover:text-green-300 hover:underline cursor-pointer"
+                >
+                  {user.username}
+                </Link>
+              </>
             )}
           </div>
           <div className="flex items-center space-x-4 pe-3">
@@ -101,12 +115,12 @@ function Navbar() {
                 >
                   <ul className="py-1">
                     <li className="hover:bg-gray-800 px-4 py-2 cursor-pointer">
-                      <Link to="/settings" className="block w-full text-green-300">
+                      <Link to="/settings" className="block w-full text-green-300 text-sm">
                         Settings
                       </Link>
                     </li>
                     <li className="hover:bg-gray-800 px-4 py-2 cursor-pointer">
-                      <Link to="/logout" className="block w-full text-green-300">
+                      <Link to="/logout" className="block w-full text-green-300 text-sm">
                         Logout
                       </Link>
                     </li>

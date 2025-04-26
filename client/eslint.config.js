@@ -32,6 +32,7 @@ export default [
       ...reactHooks.configs.recommended.rules,
       "react/jsx-no-target-blank": "off",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "react-hooks/exhaustive-deps": "off",
       "import/order": [
         "warn",
         {
@@ -46,7 +47,7 @@ export default [
           },
           pathGroups: [
             {
-              pattern: "{react,react-dom,react-router,react-router-dom}",
+              pattern: "{react,react-router-dom}",
               group: "external",
               position: "before",
             },
@@ -67,6 +68,10 @@ export default [
           ignoreTemplateLiterals: false,
         },
       ],
+      "no-trailing-spaces": "warn",
+      "space-infix-ops": "warn",
+      indent: ["warn", 2],
+      "no-multi-spaces": "warn",
     },
   },
 ];
