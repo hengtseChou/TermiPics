@@ -50,11 +50,11 @@ function Modal({ isOpen, onClose, onUpload }) {
   return (
     <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70">
       {/* Modal container */}
-      <div className="bg-gray-900 mx-4 border border-green-500 rounded-lg w-full max-w-md overflow-hidden">
+      <div className="bg-gray-900 mx-4 border border-green-700 rounded-lg w-full max-w-md overflow-hidden">
         {/* Modal header */}
         <div className="flex justify-between items-center px-6 py-4 border-green-700 border-b">
           <h3 className="font-medium text-green-500 text-lg">Upload Image</h3>
-          <button onClick={handleClose} className="text-green-400 hover:text-green-300 transition-colors">
+          <button onClick={handleClose} className="text-green-500 hover:text-green-400 transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -64,7 +64,7 @@ function Modal({ isOpen, onClose, onUpload }) {
           {!file ? (
             <div
               {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+              className={`border border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                 isDragActive ? "border-green-500 bg-gray-800" : "border-green-700 hover:border-green-600"
               }`}
             >
@@ -80,34 +80,34 @@ function Modal({ isOpen, onClose, onUpload }) {
               {/* Form fields */}
               <div className="space-y-4">
                 <div>
-                  <label className="block mb-1 font-medium text-green-500 text-sm">Title *</label>
+                  <label className="block mb-1 font-medium text-green-300 text-sm">Title *</label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="bg-gray-800 px-3 py-2 border border-green-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full text-green-400"
-                    placeholder="Enter a title"
+                    className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
+                    placeholder=""
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-medium text-green-500 text-sm">Description</label>
+                  <label className="block mb-1 font-medium text-green-300 text-sm">Description</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows="2"
-                    className="bg-gray-800 px-3 py-2 border border-green-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full text-green-400"
-                    placeholder="Enter a description"
+                    className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
+                    placeholder=""
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-medium text-green-500 text-sm">Labels</label>
+                  <label className="block mb-1 font-medium text-green-300 text-sm">Labels</label>
                   <input
                     type="text"
                     value={labels}
                     onChange={(e) => setLabels(e.target.value)}
-                    className="bg-gray-800 px-3 py-2 border border-green-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full text-green-400"
+                    className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
                     placeholder="Enter labels separated by commas"
                   />
                 </div>
@@ -115,7 +115,7 @@ function Modal({ isOpen, onClose, onUpload }) {
 
               {/* Image preview */}
               <div className="mt-4">
-                <p className="mb-2 font-medium text-green-500 text-sm">Preview</p>
+                <p className="mb-2 font-medium text-green-300 text-sm">Preview</p>
                 <div className="p-2 border border-green-700 rounded-md">
                   <img src={preview} alt="Preview" className="w-full max-h-48 object-contain" />
                   <p className="mt-1 text-green-700 text-xs text-center">{file.name}</p>
@@ -130,10 +130,10 @@ function Modal({ isOpen, onClose, onUpload }) {
           <button
             onClick={handleUpload}
             disabled={!title || !file}
-            className={`flex items-center px-4 py-2 rounded-md border ${
+            className={`flex items-center px-4 py-2 rounded-md ${
               !title || !file
-                ? "bg-gray-700 border-gray-600 cursor-not-allowed text-gray-500"
-                : "bg-gray-900 hover:bg-gray-800 border-green-500 text-green-500 hover:text-green-400"
+                ? "bg-gray-700 cursor-not-allowed text-gray-500"
+                : "bg-gray-800 hover:bg-gray-700 text-green-300 hover:cursor-pointer"
             } transition-colors`}
           >
             <Upload size={16} className="mr-2" />

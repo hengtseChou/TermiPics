@@ -105,7 +105,7 @@ const Signup = () => {
           onSubmit={handleSubmit}
         >
           {({ isSubmitting }) => (
-            <Form className="bg-gray-900 shadow-lg p-6 border border-green-500 rounded-lg w-[24rem] max-w-full">
+            <Form className="bg-gray-900 p-6 border border-green-700 rounded-lg w-[24rem] max-w-full">
               {/* Email Field */}
               <div className="mb-4">
                 <label htmlFor="email" className="text-green-300">
@@ -114,7 +114,7 @@ const Signup = () => {
                 <Field
                   type="email"
                   name="email"
-                  className="bg-gray-800 mt-1 p-2 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full text-green-300"
+                  className="bg-gray-800 mt-1 p-2 rounded-md focus:outline-none w-full text-green-300"
                 />
                 <ErrorMessage name="email" component="div" className="mt-1 text-rose-500" />
               </div>
@@ -126,7 +126,7 @@ const Signup = () => {
                 <Field
                   type="text"
                   name="username"
-                  className="bg-gray-800 mt-1 p-2 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full text-green-300"
+                  className="bg-gray-800 mt-1 p-2 rounded-md focus:outline-none w-full text-green-300"
                 />
                 <ErrorMessage name="username" component="div" className="mt-1 text-rose-500" />
               </div>
@@ -138,7 +138,7 @@ const Signup = () => {
                 <Field
                   type="password"
                   name="password"
-                  className="bg-gray-800 mt-1 p-2 border border-green-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full text-green-300"
+                  className="bg-gray-800 mt-1 p-2 rounded-md focus:outline-none w-full text-green-300"
                 />
                 <ErrorMessage name="password" component="div" className="mt-1 text-rose-500" />
               </div>
@@ -146,7 +146,7 @@ const Signup = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || isLoading}
-                className="bg-green-500 hover:bg-green-600 py-2 rounded-lg w-full text-black transition"
+                className="bg-green-500 hover:bg-green-300 py-2 rounded-lg w-full text-black transition hover:cursor-pointer"
               >
                 {isLoading ? "Signing Up..." : "[ Create_Account ]"}
               </button>
@@ -155,9 +155,9 @@ const Signup = () => {
         </Formik>
 
         <div className="flex items-center my-6 w-full">
-          <div className="flex-grow bg-green-500 h-px"></div>
+          <div className="flex-grow bg-green-700 h-px"></div>
           <span className="mx-4">or</span>
-          <div className="flex-grow bg-green-500 h-px"></div>
+          <div className="flex-grow bg-green-700 h-px"></div>
         </div>
 
         <button
@@ -168,7 +168,7 @@ const Signup = () => {
           <span>[ Continue_With_Google ]</span>
         </button>
 
-        <p className="mt-4 text-green-500 text-xs">
+        <p className="mt-4 text-xs">
           Already have an account?{" "}
           <a href="/login" className="text-green-300 hover:underline">
             [ Login ]

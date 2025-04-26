@@ -9,13 +9,13 @@ function Home() {
         <div className="flex space-x-4">
           <Link
             to="/signup"
-            className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg text-black transition"
+            className="bg-green-500 hover:bg-green-400 px-6 py-2 rounded-lg w-40 text-black text-center transition"
           >
             [ Sign_Up ]
           </Link>
           <Link
             to="/login"
-            className="bg-gray-900 hover:bg-gray-800 px-6 py-2 rounded-lg text-green-300 transition"
+            className="bg-gray-900 hover:bg-gray-800 px-6 py-2 rounded-lg w-40 text-green-300 text-center transition"
           >
             [ Login ]
           </Link>
