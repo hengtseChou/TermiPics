@@ -18,10 +18,21 @@ if [ -n "$linter_output" ]; then
 fi
 echo "[pre-commit] Formatting frontend code"
 npx eslint . --fix --quiet
-echo "[pre-commit] Formatting backend code"
+echo "[pre-commit] Checking backend code"
 cd ../server
-isort app
-black app -l 120
+linter_output=$(uv run ruff check --fix --quiet)
+if [ -n "$linter_output" ]; then
+  echo "[pre-commit] Ruff found issues below:"
+  echo "$linter_output"
+  read -p "[pre-commit] Would you like to abort the commit? (y/N) " answer
+  answer=${answer:-N}
+  if [[ "$answer" =~ ^[Yy]$ ]]; then
+    echo "[pre-commit] Aborting"
+    exit 1
+  fi
+fi
+echo "[pre-commit] Formatting backend code"
+uv run ruff format
 cd ..
 if [ -z "$staged_files" ]; then
   echo "[pre-commit] No files staged for commit"
