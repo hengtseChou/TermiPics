@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
 
 
 @dataclass
@@ -9,9 +10,9 @@ class User:
     username: str
     created_at: datetime
     last_active: datetime
-    password: str = None
     auth_provider: str = "email"  # email (default), google.
-    avatar: str = None
+    password: Optional[str] = None
+    avatar: Optional[str] = None
     images: int = 0
     is_premium: bool = False
 
@@ -33,25 +34,23 @@ class User:
 @dataclass
 class Image:
     image_uid: str
-    user_id: str
+    user_uid: str
     title: str
-    ext: str
+    format: str
     uploaded_at: datetime
     updated_at: datetime
     url: str
     thumbnail_url: str
-    desc: str = None
-    tags: list[str] = None
+    labels: Optional[list[str]] = None
     is_deleted: bool = False
 
     def to_dict(self):
         return {
             "image_uid": self.image_uid,
-            "user_id": self.user_id,
+            "user_uid": self.user_uid,
             "title": self.title,
-            "ext": self.ext,
-            "desc": self.desc,
-            "tags": self.tags,
+            "format": self.format,
+            "labels": self.labels,
             "uploaded_at": self.uploaded_at,
             "updated_at": self.updated_at,
             "url": self.url,

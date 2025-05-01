@@ -1,27 +1,27 @@
 from pydantic import BaseModel
 
 
-class SignupRequest(BaseModel):
+class Signup(BaseModel):
     email: str
     username: str
     password: str
 
 
-class LoginRequest(BaseModel):
+class SignupResponse(BaseModel):
+    user_uid: str
+
+
+class Login(BaseModel):
     email: str
     password: str
 
 
-class TokenRequest(BaseModel):
+class Token(BaseModel):
     token: str
 
 
-class GoogleOAuthRequest(BaseModel):
+class GoogleOAuth(BaseModel):
     code: str
-
-
-class MessageResponse(BaseModel):
-    message: str
 
 
 class AuthResponse(BaseModel):

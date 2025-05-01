@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import uuid4
 
@@ -24,7 +24,6 @@ def supabase_client():
 
 
 class TableOperator(ABC):
-
     def __init__(self, client):
         self.client = client
 
@@ -56,23 +55,32 @@ class TableOperator(ABC):
         pass
 
     @abstractmethod
-    def get_user_uid(self, email: str, auth_provider: str) -> Optional[str]:
+    def get_user_uid(
+        self,
+        auth_provider: str,
+        *,
+        email: Optional[str] = None,
+        username: Optional[str] = None,
+    ) -> str:
         pass
 
     @abstractmethod
-    def get_user_info_by_keys(self, user_uid: str, keys: list[str]) -> int:
+    def get_user_info_by_keys(self, user_uid: str, keys: list[str]) -> dict:
         pass
 
 
 class SupabaseTable(TableOperator):
-
     def __init__(self, client: SupabaseClient):
         super().__init__(client)
         self.client = client
 
     def is_email_exists(self, email: str, auth_provider: str) -> bool:
         response = (
-            self.client.table("users").select("email").eq("email", email).eq("auth_provider", auth_provider).execute()
+            self.client.table("users")
+            .select("email")
+            .eq("email", email)
+            .eq("auth_provider", auth_provider)
+            .execute()
         )
         return len(response.data) > 0
 
@@ -95,7 +103,7 @@ class SupabaseTable(TableOperator):
         avatar: Optional[str] = None,
     ) -> str:
         user_uid = str(uuid4())
-        created_at = datetime.now(timezone.utc).isoformat()
+        created_at = datetime.now(UTC)
         last_active = created_at
 
         if auth_provider == "email":
@@ -132,15 +140,23 @@ class SupabaseTable(TableOperator):
         return user_uid
 
     def update_last_active(self, user_uid: str) -> None:
-        last_active = datetime.now(timezone.utc).isoformat()
+        last_active = datetime.now(UTC).isoformat()
         try:
-            self.client.table("users").update({"last_active": last_active}).eq("user_uid", user_uid).execute()
+            self.client.table("users").update({"last_active": last_active}).eq(
+                "user_uid",
+                user_uid,
+            ).execute()
         except APIError:
             raise HTTPException(status_code=500, detail="Error connecting to database")
 
     def get_user_creds(self, email: str) -> dict:
         try:
-            response = self.client.table("users").select("user_uid", "password").eq("email", email).execute()
+            response = (
+                self.client.table("users")
+                .select("user_uid", "password")
+                .eq("email", email)
+                .execute()
+            )
         except APIError:
             raise HTTPException(status_code=500, detail="Error connecting to database")
         if not response.data:
@@ -148,12 +164,21 @@ class SupabaseTable(TableOperator):
 
         return response.data[0]
 
-    def get_user_uid(self, email: str, auth_provider: str) -> Optional[str]:
+    def get_user_uid(
+        self,
+        auth_provider: str,
+        *,
+        email: Optional[str] = None,
+        username: Optional[str] = None,
+    ) -> str:
+        if bool(email) == bool(username):
+            raise ValueError("Must provide exactly one of email or username")
+        field, value = ("email", email) if email else ("username", username)
         try:
             response = (
                 self.client.table("users")
                 .select("user_uid")
-                .eq("email", email)
+                .eq(field, value)
                 .eq("auth_provider", auth_provider)
                 .execute()
             )

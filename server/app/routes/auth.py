@@ -1,26 +1,33 @@
+from typing import Annotated
+
 import httpx
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Body, HTTPException, status
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
 from app.config import GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET
 from app.schemas import (
     AuthResponse,
-    GoogleOAuthRequest,
-    LoginRequest,
-    MessageResponse,
-    SignupRequest,
-    TokenRequest,
+    GoogleOAuth,
+    Login,
+    Signup,
+    SignupResponse,
+    Token,
     VerificationResponse,
 )
-from app.utils.auth import create_access_token, create_refresh_token, validate_token, verify_password
+from app.utils.auth import (
+    create_access_token,
+    create_refresh_token,
+    validate_token,
+    verify_password,
+)
 from app.utils.db import SupabaseTable, supabase_client
 
 router = APIRouter()
 
 
-@router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=MessageResponse)
-async def signup(request: SignupRequest):
+@router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=Signup)
+async def signup(request: Annotated[Signup, Body(...)]):
     """
     Handle normal email/password signup.
     """
@@ -30,18 +37,18 @@ async def signup(request: SignupRequest):
             raise HTTPException(status_code=400, detail="Email already registered")
         if supabase.is_username_exists(username=request.username, auth_provider="email"):
             raise HTTPException(status_code=400, detail="Username already taken")
-        supabase.insert_new_user(
+        user_uid = supabase.insert_new_user(
             email=request.email,
             username=request.username,
             password=request.password,
             auth_provider="email",
         )
 
-    return MessageResponse(message="User created successfully")
+    return SignupResponse(user_uid=user_uid)
 
 
 @router.post("/login", status_code=status.HTTP_200_OK, response_model=AuthResponse)
-async def login(request: LoginRequest):
+async def login(request: Annotated[Login, Body(...)]):
     """
     Handle email/password login.
     """
@@ -66,7 +73,7 @@ async def login(request: LoginRequest):
 
 
 @router.post("/google", status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
-async def continue_with_google(request: GoogleOAuthRequest):
+async def continue_with_google(request: GoogleOAuth):
     """
     Handle continue with Google.
     """
@@ -86,7 +93,11 @@ async def continue_with_google(request: GoogleOAuthRequest):
     id_token_value = token_response.get("id_token")
     if not id_token_value:
         raise HTTPException(status_code=400, detail="Missing id_token in response.")
-    id_info = id_token.verify_oauth2_token(id_token_value, requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
+    id_info = id_token.verify_oauth2_token(
+        id_token_value,
+        requests.Request(),
+        GOOGLE_OAUTH_CLIENT_ID,
+    )
     email = id_info.get("email")
     with supabase_client() as client:
         supabase = SupabaseTable(client)
@@ -113,28 +124,30 @@ async def continue_with_google(request: GoogleOAuthRequest):
 
 
 @router.post("/verify-token", response_model=VerificationResponse)
-async def verify_token(request: TokenRequest):
+async def verify_token(request: Token):
     """
     Verify the access token.
     """
     payload = validate_token(request.token)
-    user_uid = payload.get("user_uid")
+    user_uid = payload["user_uid"]
+
     return VerificationResponse(
         user_uid=user_uid,
     )
 
 
 @router.post("/refresh-token/", response_model=AuthResponse)
-async def refresh_token(request: TokenRequest):
+async def refresh_token(token: str):
     """
     Refresh the access token using a valid refresh token.
     """
-    payload = validate_token(request.token)
-    user_uid = payload.get("user_uid")
+    payload = validate_token(token)
+    user_uid = payload["user_uid"]
     access_token = create_access_token(data={"user_uid": user_uid})
+    refresh_token = token
 
     return AuthResponse(
         access_token=access_token,
-        refresh_token=request.token,
+        refresh_token=refresh_token,
         user_uid=user_uid,
     )
