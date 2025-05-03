@@ -33,7 +33,7 @@ const Signup = () => {
       .required("Password is required"),
   });
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async values => {
     setIsLoading(true);
     try {
       await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/signup`, values, {
@@ -58,7 +58,7 @@ const Signup = () => {
 
   const handleGoogleLogin = useGoogleLogin({
     flow: "auth-code",
-    onSuccess: async (codeResponse) => {
+    onSuccess: async codeResponse => {
       try {
         setIsLoading(true);
         const authResponse = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/google`, {
@@ -155,9 +155,9 @@ const Signup = () => {
         </Formik>
 
         <div className="flex items-center my-6 w-full">
-          <div className="flex-grow bg-green-700 h-px"></div>
+          <div className="flex-grow bg-green-700 h-px" />
           <span className="mx-4">or</span>
-          <div className="flex-grow bg-green-700 h-px"></div>
+          <div className="flex-grow bg-green-700 h-px" />
         </div>
 
         <button

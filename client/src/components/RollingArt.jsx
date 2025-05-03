@@ -68,7 +68,7 @@ Container started...
   const maxHeight = asciiArt.split("\n").length;
 
   const createAnimationFrame = () => {
-    const duplicatedArt = asciiArt + "\n" + asciiArt;
+    const duplicatedArt = `${asciiArt}\n${asciiArt}`;
     const lines = duplicatedArt.split("\n");
     return lines.slice(position, position + visibleLines).join("\n");
   };
@@ -76,7 +76,7 @@ Container started...
   // Animation loop
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setPosition((prevPos) => {
+      setPosition(prevPos => {
         const nextPos = prevPos + 1;
         return nextPos >= maxHeight ? 0 : nextPos;
       });
@@ -87,9 +87,7 @@ Container started...
   return (
     <div className="flex justify-center items-start w-full h-full">
       <div ref={containerRef} className="overflow-hidden" style={{ height: `${visibleLines}em` }}>
-        <pre className="font-mono text-green-500 text-xs sm:text-sm whitespace-pre">
-          {createAnimationFrame()}
-        </pre>
+        <pre className="font-mono text-green-500 text-xs sm:text-sm whitespace-pre">{createAnimationFrame()}</pre>
       </div>
     </div>
   );

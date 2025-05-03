@@ -23,12 +23,10 @@ const Login = () => {
 
   const validationSchema = Yup.object({
     email: Yup.string().email("Invalid email address").required("Email is required"),
-    password: Yup.string()
-      .min(8, "Password must be at least 8 characters")
-      .required("Password is required"),
+    password: Yup.string().min(8, "Password must be at least 8 characters").required("Password is required"),
   });
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async values => {
     setIsLoading(true);
     try {
       const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/login/`, values, {
@@ -55,7 +53,7 @@ const Login = () => {
 
   const handleGoogleLogin = useGoogleLogin({
     flow: "auth-code",
-    onSuccess: async (codeResponse) => {
+    onSuccess: async codeResponse => {
       try {
         setIsLoading(true);
         const authResponse = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/google`, {
@@ -139,9 +137,9 @@ const Login = () => {
         </Formik>
 
         <div className="flex items-center my-6 w-full">
-          <div className="flex-grow bg-green-700 h-px"></div>
+          <div className="flex-grow bg-green-700 h-px" />
           <span className="mx-4">or</span>
-          <div className="flex-grow bg-green-700 h-px"></div>
+          <div className="flex-grow bg-green-700 h-px" />
         </div>
 
         <button

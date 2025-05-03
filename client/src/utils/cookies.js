@@ -10,11 +10,11 @@ const setCookie = (name, value) => {
   Cookies.set(name, value, cookieConfig);
 };
 
-const getCookie = (name) => {
+const getCookie = name => {
   return Cookies.get(name);
 };
 
-const removeCookie = (name) => {
+const removeCookie = name => {
   Cookies.remove(name, cookieConfig);
 };
 

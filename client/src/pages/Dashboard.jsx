@@ -9,10 +9,17 @@ import RollingAsciiAnimation from "../components/RollingArt";
 import { getCookie } from "../utils/cookies";
 
 function Dashboard() {
-  const [imageCount, setImageCount] = useState(null);
-  const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpened, setIsModalOpened] = useState(false);
+
+  const [username, setUsername] = useState(null);
+  const [imageCount, setImageCount] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [images, setImages] = useState([]);
+
+  // TODO: a function to fetch image with pagination
+  // TODO: a function to clear up the image list
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -39,14 +46,13 @@ function Dashboard() {
     setIsModalOpened(false);
   };
 
-  const handleImageUpload = async (imageData) => {
+  const handleImageUpload = async newUpload => {
     const access_token = getCookie("access_token");
     try {
       const formData = new FormData();
-      formData.append("image", imageData.file);
-      formData.append("title", imageData.title);
-      formData.append("description", imageData.description);
-      formData.append("labels", imageData.labels);
+      formData.append("file", newUpload.file);
+      formData.append("title", newUpload.title);
+      formData.append("labels", newUpload.labels);
 
       await axios.post(`${import.meta.env.VITE_SERVER_URL}/images/upload`, formData, {
         headers: {

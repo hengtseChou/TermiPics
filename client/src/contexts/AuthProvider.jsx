@@ -3,14 +3,14 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 import { AuthContext } from "./AuthContext";
-import { setCookie, getCookie } from "../utils/cookies";
+import { getCookie, setCookie } from "../utils/cookies";
 
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userUid, setUserUid] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshAccessToken = async (refreshToken) => {
+  const refreshAccessToken = async refreshToken => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/refresh-token`, {
         token: refreshToken,
@@ -26,7 +26,7 @@ const useAuth = () => {
     }
   };
 
-  const verifyAccessToken = async (accessToken) => {
+  const verifyAccessToken = async accessToken => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/auth/verify-token`, {
         token: accessToken,

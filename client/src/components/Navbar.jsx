@@ -17,14 +17,11 @@ function Navbar() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_URL}/user/info?keys=username,avatar`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/info?keys=username,avatar`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         const data = response.data;
         setUser({
           username: data.username,
@@ -45,7 +42,7 @@ function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (!dropdownOpen || avatarRef.current?.contains(event.target)) {
         return;
       }
@@ -73,17 +70,11 @@ function Navbar() {
               <div className="bg-green-500/50 rounded-md w-50 h-6 animate-pulse" />
             ) : (
               <>
-                <Link
-                  to="/"
-                  className="font-bold hover:text-green-300 hover:underline cursor-pointer"
-                >
+                <Link to="/" className="font-bold hover:text-green-300 hover:underline cursor-pointer">
                   TermiPics
                 </Link>
                 <span className="mx-2">/</span>
-                <Link
-                  to="/dashboard"
-                  className="font-bold hover:text-green-300 hover:underline cursor-pointer"
-                >
+                <Link to="/dashboard" className="font-bold hover:text-green-300 hover:underline cursor-pointer">
                   {user.username}
                 </Link>
               </>

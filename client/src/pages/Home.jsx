@@ -22,9 +22,7 @@ function Home() {
         </div>
         <div className="bg-gray-900 shadow-lg mt-10 p-6 border border-green-500 rounded-lg w-full max-w-2xl text-center">
           <h2 className="font-semibold text-xl">_Your Image Repository_</h2>
-          <p className="mt-2 text-green-300">
-            We&apos;re just like imgur.com without the annoying social features.
-          </p>
+          <p className="mt-2 text-green-300">We&apos;re just like imgur.com without the annoying social features.</p>
         </div>
         <p className="mt-6 text-green-500 text-xs">[ All_Systems_Operational ]</p>
       </div>

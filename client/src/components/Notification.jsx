@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 
-const showToast = (data) => {
+const showToast = data => {
   const { title, msg, type } = data;
 
   const body = (
@@ -19,20 +19,20 @@ const showToast = (data) => {
   };
 
   switch (type) {
-  case "success":
-    toast.success(body, options);
-    break;
-  case "error":
-    toast.error(body, options);
-    break;
-  case "info":
-    toast.info(body, options);
-    break;
-  case "warning":
-    toast.warning(body, options);
-    break;
-  default:
-    toast(body, options);
+    case "success":
+      toast.success(body, options);
+      break;
+    case "error":
+      toast.error(body, options);
+      break;
+    case "info":
+      toast.info(body, options);
+      break;
+    case "warning":
+      toast.warning(body, options);
+      break;
+    default:
+      toast(body, options);
   }
 };
 

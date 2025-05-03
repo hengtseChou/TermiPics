@@ -26,7 +26,7 @@ function Modal({ isOpened, onClose, onUpload }) {
     accept: {
       "image/*": [],
     },
-    onDrop: (acceptedFiles) => {
+    onDrop: acceptedFiles => {
       const selectedFile = acceptedFiles[0];
       setFile(selectedFile);
       setFileSize(selectedFile.size);
@@ -94,7 +94,7 @@ function Modal({ isOpened, onClose, onUpload }) {
         {/* Modal header */}
         <div className="flex justify-between items-center px-6 py-4 border-green-700 border-b">
           <h3 className="font-medium text-green-500 text-lg">Upload Image</h3>
-          <button onClick={handleClose} className="text-green-500 hover:text-green-400 animation-colors">
+          <button type="button" onClick={handleClose} className="text-green-500 hover:text-green-400 animation-colors">
             <X size={20} />
           </button>
         </div>
@@ -120,22 +120,28 @@ function Modal({ isOpened, onClose, onUpload }) {
               {/* Form fields */}
               <div className="space-y-4">
                 <div>
-                  <label className="block mb-1 font-medium text-green-300 text-sm">Title *</label>
+                  <label htmlFor="title" className="block mb-1 font-medium text-green-300 text-sm">
+                    Title *
+                  </label>
                   <input
+                    id="title"
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={e => setTitle(e.target.value)}
                     className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
                     placeholder=""
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-medium text-green-300 text-sm">Labels</label>
+                  <label htmlFor="labels" className="block mb-1 font-medium text-green-300 text-sm">
+                    Labels
+                  </label>
                   <input
+                    id="labels"
                     type="text"
                     value={labels}
-                    onChange={(e) => setLabels(e.target.value)}
+                    onChange={e => setLabels(e.target.value)}
                     className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
                     placeholder="Enter labels separated by commas"
                   />
@@ -161,6 +167,7 @@ function Modal({ isOpened, onClose, onUpload }) {
         {/* Modal footer */}
         <div className="flex justify-end bg-gray-900 px-6 py-4 border-green-700 border-t">
           <button
+            type="button"
             onClick={handleUpload}
             disabled={!title || !file}
             className={`flex items-center px-4 py-2 rounded-md ${
