@@ -1,26 +1,14 @@
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import Optional
 from uuid import uuid4
 
 from fastapi import HTTPException
 from postgrest.exceptions import APIError
-from supabase import create_client
 from supabase.client import Client as SupabaseClient
 
-from app.config import SUPABASE_KEY, SUPABASE_URL
 from app.models import User
 from app.utils.auth import hash_password
-
-
-@contextmanager
-def supabase_client():
-    client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    try:
-        yield client
-    finally:
-        pass
 
 
 class TableOperator(ABC):
@@ -62,6 +50,22 @@ class TableOperator(ABC):
         email: Optional[str] = None,
         username: Optional[str] = None,
     ) -> str:
+        """
+        Retrieve the unique identifier (user_uid) of a user based on their authentication provider
+        and either their email or username.
+
+        Args:
+            auth_provider (str): The authentication provider (e.g., "email", "google").
+            email (Optional[str]): The email of the user. Must be provided if username is not.
+            username (Optional[str]): The username of the user. Must be provided if email is not.
+
+        Returns:
+            str: The unique identifier (user_uid) of the user.
+
+        Raises:
+            ValueError: If neither email nor username is provided, or if both are provided.
+            HTTPException: If there is an error connecting to the database or if the user is not found.
+        """
         pass
 
     @abstractmethod
@@ -103,7 +107,7 @@ class SupabaseTable(TableOperator):
         avatar: Optional[str] = None,
     ) -> str:
         user_uid = str(uuid4())
-        created_at = datetime.now(UTC)
+        created_at = datetime.now(UTC).isoformat()
         last_active = created_at
 
         if auth_provider == "email":
@@ -133,10 +137,9 @@ class SupabaseTable(TableOperator):
             raise ValueError("Invalid auth provider")
 
         try:
-            self.client.table("users").insert(new_user.to_dict()).execute()
+            self.client.table("users").insert(new_user.dict()).execute()
         except APIError:
             raise HTTPException(status_code=500, detail="Error connecting to database")
-
         return user_uid
 
     def update_last_active(self, user_uid: str) -> None:
@@ -161,7 +164,6 @@ class SupabaseTable(TableOperator):
             raise HTTPException(status_code=500, detail="Error connecting to database")
         if not response.data:
             raise HTTPException(status_code=404, detail="User not found")
-
         return response.data[0]
 
     def get_user_uid(
@@ -186,7 +188,6 @@ class SupabaseTable(TableOperator):
             raise HTTPException(status_code=500, detail="Error connecting to database")
         if not response.data:
             raise HTTPException(status_code=404, detail="User not found")
-
         return response.data[0]["user_uid"]
 
     def get_user_info_by_keys(self, user_uid: str, keys: list[str]) -> dict:
@@ -196,5 +197,4 @@ class SupabaseTable(TableOperator):
             raise HTTPException(status_code=500, detail="Error connecting to database")
         if not response.data:
             raise HTTPException(status_code=404, detail="User not found")
-
         return {key: response.data[0].get(key) for key in keys}

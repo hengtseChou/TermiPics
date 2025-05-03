@@ -7,12 +7,13 @@ from google.oauth2 import id_token
 
 from app.config import GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET
 from app.schemas import (
-    AuthResponse,
-    GoogleOAuth,
-    Login,
-    Signup,
+    AuthTokenResponse,
+    GoogleOAuthRequest,
+    LoginRequest,
+    RefreshRequest,
+    SignupRequest,
     SignupResponse,
-    Token,
+    VerificationRequest,
     VerificationResponse,
 )
 from app.utils.auth import (
@@ -26,8 +27,8 @@ from app.utils.db import SupabaseTable, supabase_client
 router = APIRouter()
 
 
-@router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=Signup)
-async def signup(request: Annotated[Signup, Body(...)]):
+@router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=SignupResponse)
+async def signup(request: Annotated[SignupRequest, Body(...)]):
     """
     Handle normal email/password signup.
     """
@@ -47,8 +48,8 @@ async def signup(request: Annotated[Signup, Body(...)]):
     return SignupResponse(user_uid=user_uid)
 
 
-@router.post("/login", status_code=status.HTTP_200_OK, response_model=AuthResponse)
-async def login(request: Annotated[Login, Body(...)]):
+@router.post("/login", status_code=status.HTTP_200_OK, response_model=AuthTokenResponse)
+async def login(request: Annotated[LoginRequest, Body(...)]):
     """
     Handle email/password login.
     """
@@ -65,15 +66,15 @@ async def login(request: Annotated[Login, Body(...)]):
         refresh_token = create_refresh_token(data={"user_uid": user_uid})
         supabase.update_last_active(user_uid)
 
-    return AuthResponse(
+    return AuthTokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         user_uid=user_uid,
     )
 
 
-@router.post("/google", status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
-async def continue_with_google(request: GoogleOAuth):
+@router.post("/google", status_code=status.HTTP_201_CREATED, response_model=AuthTokenResponse)
+async def continue_with_google(request: GoogleOAuthRequest):
     """
     Handle continue with Google.
     """
@@ -116,7 +117,7 @@ async def continue_with_google(request: GoogleOAuth):
     access_token = create_access_token(data={"user_uid": user_uid})
     refresh_token = create_refresh_token(data={"user_uid": user_uid})
 
-    return AuthResponse(
+    return AuthTokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         user_uid=user_uid,
@@ -124,7 +125,7 @@ async def continue_with_google(request: GoogleOAuth):
 
 
 @router.post("/verify-token", response_model=VerificationResponse)
-async def verify_token(request: Token):
+async def verify_token(request: VerificationRequest):
     """
     Verify the access token.
     """
@@ -136,17 +137,17 @@ async def verify_token(request: Token):
     )
 
 
-@router.post("/refresh-token/", response_model=AuthResponse)
-async def refresh_token(token: str):
+@router.post("/refresh-token/", response_model=AuthTokenResponse)
+async def refresh_token(request: RefreshRequest):
     """
     Refresh the access token using a valid refresh token.
     """
-    payload = validate_token(token)
+    payload = validate_token(request.token)
     user_uid = payload["user_uid"]
     access_token = create_access_token(data={"user_uid": user_uid})
-    refresh_token = token
+    refresh_token = request.token
 
-    return AuthResponse(
+    return AuthTokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         user_uid=user_uid,

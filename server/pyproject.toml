@@ -40,7 +40,8 @@ select = ["F", "COM", "LOG", "G", "ARG", "T20", "I", "UP", "E", "W", "FAST"]
 # Ignored rules:
 # - UP007: Use `X | Y` in type annotations
 # - COM812: Trailing comma missing (formatter handled it)
-ignore = ["UP007", "COM812"]
+# - E501: Line too long (formatter handled it)
+ignore = ["UP007", "COM812", "E501", "E"]
 fixable = ["ALL"]
 
 [tool.ruff.format]

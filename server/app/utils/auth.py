@@ -1,9 +1,9 @@
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Annotated, Any
 
 import bcrypt
 import jwt
-from fastapi import HTTPException
+from fastapi import Header, HTTPException
 
 from app.config import (
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -64,7 +64,7 @@ def validate_token(token: str) -> dict[str, Any]:
     return payload
 
 
-def get_access_token(authorization: str | None) -> str:
+def get_access_token(authorization: Annotated[str, Header()]) -> str:
     """
     Dependency to extract the Bearer token from the Authorization header.
     """
@@ -74,5 +74,4 @@ def get_access_token(authorization: str | None) -> str:
     token_parts = authorization.split(" ")
     if len(token_parts) != 2 or token_parts[0] != "Bearer":
         raise HTTPException(status_code=401, detail="Invalid authorization format")
-
     return token_parts[1]  # Return the access token
