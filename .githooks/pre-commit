@@ -3,7 +3,7 @@ exec </dev/tty
 cd "$(git rev-parse --show-toplevel)"
 
 staged_files=$(git diff --cached --name-only)
-staged_frontend=$(echo "$staged_files" | grep -E '^client/' | sed 's|^client/||' || true)
+staged_frontend=$(echo "$staged_files" | grep -E '^client/src/' | sed 's|^client/||' || true)
 staged_backend=$(echo "$staged_files" | grep -E '^server/' | sed 's|^server/||' || true)
 
 echo "[pre-commit] Running pre-commit hook"
@@ -11,7 +11,7 @@ echo "[pre-commit] Running pre-commit hook"
 if [ -n "$staged_frontend" ]; then
   echo "[pre-commit] Checking frontend code"
   cd client
-  linter_output=$(npx eslint ${staged_frontend[@]})
+  linter_output=$(npx eslint ${staged_frontend[@]} --fix)
   if [ -n "$linter_output" ]; then
     echo "[pre-commit] ESLint found issues below:"
     echo "$linter_output"
@@ -23,7 +23,7 @@ if [ -n "$staged_frontend" ]; then
     fi
   fi
   echo "[pre-commit] Formatting frontend code"
-  npx eslint ${staged_frontend[@]} --fix --quiet
+  npx prettier ${staged_frontend[@]} --write
   echo "[pre-commit] Staging formatted files"
   git add ${staged_frontend[@]}
   cd ..

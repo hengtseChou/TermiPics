@@ -1,5 +1,7 @@
 import js from "@eslint/js";
+import prettierConfig from "eslint-config-prettier";
 import importPlugin from "eslint-plugin-import";
+import prettierPlugin from "eslint-plugin-prettier";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
@@ -24,12 +26,15 @@ export default [
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
       import: importPlugin,
+      prettier: prettierPlugin,
     },
     rules: {
       ...js.configs.recommended.rules,
       ...react.configs.recommended.rules,
       ...react.configs["jsx-runtime"].rules,
       ...reactHooks.configs.recommended.rules,
+      ...prettierConfig.rules,
+      "prettier/prettier": "warn",
       "react/jsx-no-target-blank": "off",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "react-hooks/exhaustive-deps": "off",
@@ -58,20 +63,11 @@ export default [
       "react/prop-types": "off",
       "no-unused-vars": "off",
       quotes: ["warn", "double", { avoidEscape: true }],
-      "max-len": [
-        "warn",
-        {
-          code: 120,
-          ignoreUrls: true,
-          ignoreComments: true,
-          ignoreStrings: true,
-          ignoreTemplateLiterals: false,
-        },
-      ],
-      "no-trailing-spaces": "warn",
-      "space-infix-ops": "warn",
-      indent: ["warn", 2],
-      "no-multi-spaces": "warn",
+      "max-len": "off", // Turned off in favor of Prettier's printWidth
+      "no-trailing-spaces": "off", // Handled by Prettier
+      "space-infix-ops": "off", // Handled by Prettier
+      indent: "off", // Handled by Prettier
+      "no-multi-spaces": "off", // Handled by Prettier
     },
   },
 ];
