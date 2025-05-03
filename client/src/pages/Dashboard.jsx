@@ -25,7 +25,8 @@ function Dashboard() {
     const fetchUserInfo = async () => {
       const access_token = getCookie("access_token");
       try {
-        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/info?keys=images,username`, {
+        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/info`, {
+          params: { keys: "images,username" },
           headers: { Authorization: `Bearer ${access_token}` },
         });
         setImageCount(response.data.images);

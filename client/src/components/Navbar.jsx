@@ -17,7 +17,8 @@ function Navbar() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/info?keys=username,avatar`, {
+        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/info`, {
+          params: { keys: "username,avatar" },
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -27,15 +28,13 @@ function Navbar() {
           username: data.username,
           avatar: data.avatar || null,
         });
+        setLoading(false);
       } catch (error) {
         showToast({
           title: "Error",
           msg: "Unable to load user information.",
           type: "error",
         });
-        setUser({ username: "error", avatar: null });
-      } finally {
-        setLoading(false);
       }
     };
     fetchUserInfo();

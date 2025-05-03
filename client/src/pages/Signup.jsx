@@ -48,7 +48,7 @@ const Signup = () => {
     } catch (error) {
       showToast({
         title: "Error",
-        msg: error.response.data.detail,
+        msg: "Internal server error.",
         type: "error",
       });
     } finally {
