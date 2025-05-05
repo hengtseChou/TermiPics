@@ -1,0 +1,99 @@
+from abc import ABC, abstractmethod
+
+from fastapi import HTTPException, status
+from postgrest.exceptions import APIError
+from supabase.client import Client as SupabaseClient
+
+
+class UnknownStorageProvider(Exception):
+    pass
+
+
+class StorageOperator(ABC):
+    def __init__(self, client):
+        self.client = client
+
+    @abstractmethod
+    def upload_original(self, image_uid: str, file: bytes, content_type: str):
+        pass
+
+    @abstractmethod
+    def upload_thumbnail(self, image_uid: str, file: bytes):
+        pass
+
+    @abstractmethod
+    def get_original(self, image_uid: str, format: str) -> bytes:
+        pass
+
+    @abstractmethod
+    def get_thumbnail(self, image_uid: str):
+        pass
+
+    @abstractmethod
+    def delete_original(self, image_uid: str):
+        pass
+
+    @abstractmethod
+    def delete_thumbnail(self, image_uid: str):
+        pass
+
+
+class SupabaseStorage(StorageOperator):
+    def __init__(self, client: SupabaseClient):
+        super().__init__(client)
+
+    def upload_original(self, image_uid: str, file: bytes, content_type: str):
+        try:
+            self.client.storage.from_("images").upload(
+                path=f"original/{image_uid}/{content_type.split('/')[1]}",
+                file=file,
+                file_options={"content-type": content_type},
+            )
+        except APIError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error connecting to database",
+            )
+
+    def upload_thumbnail(self, image_uid: str, file: bytes):
+        try:
+            self.client.storage.from_("images").upload(
+                path=f"thumbnail/{image_uid}.png",
+                file=file,
+                file_options={"content-type": "image/png"},
+            )
+        except APIError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error connecting to database",
+            )
+
+    def get_original(self, image_uid: str, format: str) -> bytes:
+        try:
+            response = self.client.storage.from_("images").download(
+                path=f"original/{image_uid}.{format}"
+            )
+            return response
+        except APIError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error connecting to database",
+            )
+
+    def get_thumbnail(self, image_uid: str):
+        try:
+            response = self.client.storage.from_("images").download(
+                path=f"thumbnail/{image_uid}.png"
+            )
+            return response
+        except APIError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error connecting to database",
+            )
+
+    def delete_original(self, image_uid: str):
+        pass
+
+    def delete_thumbnail(self, image_uid: str):
+        pass

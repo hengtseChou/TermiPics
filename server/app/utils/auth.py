@@ -3,7 +3,7 @@ from typing import Annotated, Any
 
 import bcrypt
 import jwt
-from fastapi import Header, HTTPException
+from fastapi import Header, HTTPException, status
 
 from app.config import (
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -23,44 +23,45 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
-def create_access_token(data: dict[str, Any]) -> str:
+def create_access_token(user_uid: str) -> str:
     expires_delta = timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = datetime.now(UTC) + expires_delta
-    to_encode = data.copy()
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    now = datetime.now(UTC)
+    expire = now + expires_delta
+    data = {"sub": user_uid, "exp": expire, "iat": now}
+    encoded_jwt = jwt.encode(data, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
 
-def create_refresh_token(data: dict) -> str:
+def create_refresh_token(user_uid: str) -> str:
     expires_delta = timedelta(days=JWT_REFRESH_TOKEN_EXPIRE_DAYS)
-    expire = datetime.now(UTC) + expires_delta
-    to_encode = data.copy()
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    now = datetime.now(UTC)
+    expire = now + expires_delta
+    data = {"sub": user_uid, "exp": expire, "iat": now}
+    encoded_jwt = jwt.encode(data, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
 
 def decode_token(token: str) -> dict[str, Any]:
     """
-    Decode the JWT token and return the payload.
+    Decode the JWT token. Raise jwt exceptions if invalid.
     """
-    try:
-        payload: dict[str, Any] = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Could not decode the token")
+    return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
 
 
 def validate_token(token: str) -> dict[str, Any]:
     """
-    Validate the JWT token. Check if it has expired and if it's a valid token.
+    Validate token and translate decoding errors into HTTP exceptions.
     """
-    payload = decode_token(token)
-    if "user_uid" not in payload or "exp" not in payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    if datetime.now(UTC) > datetime.fromtimestamp(payload["exp"], UTC):
-        raise HTTPException(status_code=401, detail="Token has expired")
+    try:
+        payload = decode_token(token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    if not all(key in payload for key in ["sub", "exp", "iat"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Required claims missing"
+        )
     return payload
 
 
@@ -69,9 +70,13 @@ def get_access_token(authorization: Annotated[str, Header()]) -> str:
     Dependency to extract the Bearer token from the Authorization header.
     """
     if authorization is None:
-        raise HTTPException(status_code=401, detail="Authorization header missing")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authorization header missing"
+        )
 
     token_parts = authorization.split(" ")
     if len(token_parts) != 2 or token_parts[0] != "Bearer":
-        raise HTTPException(status_code=401, detail="Invalid authorization format")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization format"
+        )
     return token_parts[1]  # Return the access token

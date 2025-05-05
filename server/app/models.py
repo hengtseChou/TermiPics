@@ -12,7 +12,7 @@ class User(BaseModel):
     auth_provider: str = "email"  # email (default), google.
     password: Optional[str] = None
     avatar: Optional[str] = None
-    images: int = 0
+    image_count: int = 0
     is_premium: bool = False
 
 
@@ -21,9 +21,9 @@ class Image(BaseModel):
     user_uid: str
     title: str
     file_name: str
-    uploaded_at: str
+    format: str
+    size: int
+    created_at: str
     updated_at: str
-    url: str
-    thumbnail_url: str
-    labels: Optional[list[str]] = None
+    labels: list[str]
     is_deleted: bool = False

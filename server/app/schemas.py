@@ -52,5 +52,5 @@ class UserInfoResponse(BaseModel):
     auth_provider: Optional[str] = None
     password: Optional[str] = None
     avatar: Optional[str] = None
-    images: Optional[int] = None
+    image_count: Optional[int] = None
     is_premium: Optional[bool] = False
