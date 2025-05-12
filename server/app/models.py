@@ -26,4 +26,6 @@ class Image(BaseModel):
     created_at: str
     updated_at: str
     labels: list[str]
+    is_uploaded: bool = False
+    is_thumbnail_uploaded: bool = False
     is_deleted: bool = False

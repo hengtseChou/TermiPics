@@ -2,6 +2,9 @@ from io import BytesIO
 
 from PIL import Image, UnidentifiedImageError
 
+from app.dependencies.db import DatabaseClient, get_db_handler
+from app.dependencies.storage import StorageClient, get_storage_handler
+
 SUPPORTED_FORMATS = {"PNG", "JPEG", "GIF", "WEBP"}
 
 
@@ -44,3 +47,17 @@ def generate_thumbnail(image_bytes: bytes) -> bytes:
     thumbnail.save(buffer, format="PNG")
 
     return buffer.getvalue()
+
+
+def upload_original(
+    file: bytes, image_uid: str, db_client: DatabaseClient, storage_client: StorageClient
+) -> None:
+    db = get_db_handler(db_client)
+    format = db.get_image_info(image_uid=image_uid, keys=["format"])
+    storage = get_storage_handler(storage_client)
+    storage.upload_original(image_uid=image_uid, file=file, content_type=format)
+
+
+def upload_thumbnail(file: bytes, image_uid: str, storage_client: StorageClient) -> None:
+    storage = get_storage_handler(storage_client)
+    storage.upload_thumbnail(image_uid=image_uid, file=file)

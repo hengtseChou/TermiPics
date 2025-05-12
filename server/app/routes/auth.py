@@ -2,10 +2,13 @@ from typing import Annotated
 
 import httpx
 from fastapi import APIRouter, Body, HTTPException, status
+from fastapi.params import Depends
 from google.auth.transport import requests
 from google.oauth2 import id_token
+from postgrest.exceptions import APIError
 
-from app.config import DATABASE_PROVIDER, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET
+from app.config import GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET
+from app.dependencies.db import DatabaseClient, get_db_client, get_db_handler
 from app.schemas import (
     AuthTokenResponse,
     GoogleOAuthRequest,
@@ -22,59 +25,88 @@ from app.utils.auth import (
     validate_token,
     verify_password,
 )
-from app.utils.db import SupabaseTable, UnknownDatabaseProvider
-from app.utils.supabase import supabase_client
-
-match DATABASE_PROVIDER:
-    case "supabase":
-        db_client = supabase_client
-        db_handler = SupabaseTable
-    case _:
-        raise UnknownDatabaseProvider(f"Unknown database provider: {DATABASE_PROVIDER}")
 
 router = APIRouter()
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=SignupResponse)
-async def signup(request: Annotated[SignupRequest, Body(...)]):
+async def signup(
+    request: Annotated[SignupRequest, Body(...)],
+    db_client: Annotated[DatabaseClient, Depends(get_db_client)],
+):
     """
-    Handle normal email/password signup.
+    Create a new account using default email and password combination.
+
+    Request body:
+
+        - email (str)
+            User email, which is used to log user in and should be unique.
+        - username (str)
+            User username, which should also be unique.
+        - password (str)
+            User password. Must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one digit.
+
+    Response:
+
+        - user_uid (str)
+            UID for the newly registered user.
     """
-    with db_client() as client:
-        db = db_handler(client)
-        if db.is_email_exists(email=request.email, auth_provider="email"):
-            raise HTTPException(status_code=400, detail="Email already registered")
-        if db.is_username_exists(username=request.username, auth_provider="email"):
-            raise HTTPException(status_code=400, detail="Username already taken")
-        user_uid = db.insert_new_user(
-            email=request.email,
-            username=request.username,
-            password=request.password,
-            auth_provider="email",
-        )
+    db = get_db_handler(db_client)
+    if db.is_email_exists(email=request.email, auth_provider="email"):
+        raise HTTPException(status_code=400, detail="Email already registered")
+    if db.is_username_exists(username=request.username, auth_provider="email"):
+        raise HTTPException(status_code=400, detail="Username already taken")
+    user_uid = db.insert_new_user(
+        email=request.email,
+        username=request.username,
+        password=request.password,
+        auth_provider="email",
+    )
 
     return SignupResponse(user_uid=user_uid)
 
 
 @router.post("/login", status_code=status.HTTP_200_OK, response_model=AuthTokenResponse)
-async def login(request: Annotated[LoginRequest, Body(...)]):
+async def login(
+    request: Annotated[LoginRequest, Body(...)],
+    db_client: Annotated[DatabaseClient, Depends(get_db_client)],
+):
     """
-    Handle email/password login.
-    """
-    with supabase_client() as client:
-        supabase = SupabaseTable(client)
-        user_creds = supabase.get_user_creds(request.email)
-        if not user_creds:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        if not verify_password(request.password, user_creds["password"]):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password"
-            )
+    Login an user using email and password.
 
-        user_uid = user_creds["user_uid"]
-        access_token = create_access_token(user_uid=user_uid)
-        refresh_token = create_refresh_token(user_uid=user_uid)
-        supabase.update_last_active(user_uid)
+    Request body:
+
+        - email (str)
+            User email.
+        - password (str)
+            User password.
+
+    Response:
+
+        - access_token (str)
+            The access token for the authenticated session.
+        - refresh_token (str)
+            Token used to issue new access tokens.
+        - user_uid (str)
+            UID for the authenticated user.
+    """
+    db = get_db_handler(db_client)
+    try:
+        user_creds = db.get_user_info(email=request.email, keys=["user_uid", "password"])
+    except APIError:
+        raise HTTPException(status_code=500, detail="Error connecting to database")
+    if not user_creds:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if not verify_password(request.password, user_creds["password"]):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password")
+
+    user_uid = user_creds["user_uid"]
+    access_token = create_access_token(user_uid=user_uid)
+    refresh_token = create_refresh_token(user_uid=user_uid)
+    try:
+        db.update_last_active(user_uid)
+    except APIError:
+        raise HTTPException(status_code=500, detail="Error connecting to database")
 
     return AuthTokenResponse(
         access_token=access_token,
@@ -84,9 +116,25 @@ async def login(request: Annotated[LoginRequest, Body(...)]):
 
 
 @router.post("/google", status_code=status.HTTP_201_CREATED, response_model=AuthTokenResponse)
-async def continue_with_google(request: GoogleOAuthRequest):
+async def continue_with_google(
+    request: GoogleOAuthRequest, db_client: Annotated[DatabaseClient, Depends(get_db_client)]
+):
     """
-    Handle continue with Google.
+    Authenticate user with Google OAuth.
+
+    Request body:
+
+        - code (str)
+            Authorization code received from Google OAuth flow.
+
+    Response:
+
+        - access_token (str)
+            The access token for the authenticated session.
+        - refresh_token (str)
+            Token used to issue new access tokens.
+        - user_uid (str)
+            UID for the authenticated user.
     """
     token_request_uri = "https://oauth2.googleapis.com/token"
     data = {
@@ -96,10 +144,16 @@ async def continue_with_google(request: GoogleOAuthRequest):
         "redirect_uri": "postmessage",
         "grant_type": "authorization_code",
     }
-    async with httpx.AsyncClient() as client:
-        response = await client.post(token_request_uri, data=data)
-        response.raise_for_status()
-        token_response = response.json()
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(token_request_uri, data=data)
+            response.raise_for_status()
+            token_response = response.json()
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to get token from Google: {str(e)}",
+        )
 
     id_token_value = token_response.get("id_token")
     if not id_token_value:
@@ -112,19 +166,19 @@ async def continue_with_google(request: GoogleOAuthRequest):
         GOOGLE_OAUTH_CLIENT_ID,
     )
     email = id_info.get("email")
-    with supabase_client() as client:
-        supabase = SupabaseTable(client)
-        if supabase.is_email_exists(email, auth_provider="google"):
-            user_uid = supabase.get_user_uid(email=email, auth_provider="google")
-            supabase.update_last_active(user_uid)
-        else:
-            username = email.split("@")[0]
-            user_uid = supabase.insert_new_user(
-                email=email,
-                username=username,
-                auth_provider="google",
-                avatar=id_info.get("picture"),
-            )
+
+    db = get_db_handler(db_client)
+    if db.is_email_exists(email, auth_provider="google"):
+        user_uid = db.get_user_uid(email=email, auth_provider="google")
+        db.update_last_active(user_uid)
+    else:
+        username = email.split("@")[0]
+        user_uid = db.insert_new_user(
+            email=email,
+            username=username,
+            auth_provider="google",
+            avatar=id_info.get("picture"),
+        )
 
     access_token = create_access_token(user_uid=user_uid)
     refresh_token = create_refresh_token(user_uid=user_uid)
@@ -140,6 +194,16 @@ async def continue_with_google(request: GoogleOAuthRequest):
 async def verify_token(request: VerificationRequest):
     """
     Verify the access token.
+
+    Request body:
+
+        - token (str)
+            The access token to be verified.
+
+    Response:
+
+        - user_uid (str)
+            UID for the user associated with the token.
     """
     payload = validate_token(request.token)
     user_uid = payload["user_uid"]
@@ -153,6 +217,20 @@ async def verify_token(request: VerificationRequest):
 async def refresh_token(request: RefreshRequest):
     """
     Refresh the access token using a valid refresh token.
+
+    Request body:
+
+        - token (str)
+            The refresh token to be used for generating a new access token.
+
+    Response:
+
+        - access_token (str)
+            The newly issued access token for the authenticated session.
+        - refresh_token (str)
+            The same refresh token, returned for convenience.
+        - user_uid (str)
+            UID for the user associated with the token.
     """
     payload = validate_token(request.token)
     user_uid = payload["user_uid"]

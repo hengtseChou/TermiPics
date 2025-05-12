@@ -1,6 +1,6 @@
 [project]
-name = "TermiPics"
-version = "0.1.0"
+name = "server"
+version = "0"
 description = "Server side for TermiPics, an image serving service."
 requires-python = ">=3.13"
 dependencies = [

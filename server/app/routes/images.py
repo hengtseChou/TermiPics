@@ -1,32 +1,27 @@
-import io
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile, status
-from fastapi.responses import StreamingResponse
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Path,
+    UploadFile,
+    status,
+)
+from fastapi.responses import Response
+from postgrest.exceptions import APIError
 
-from app.config import DATABASE_PROVIDER, STORAGE_PROVIDER
+from app.dependencies.db import DatabaseClient, get_db_client, get_db_handler
+from app.dependencies.storage import StorageClient, get_storage_client, get_storage_handler
 from app.schemas import ImageUploadResponse
 from app.utils.auth import get_access_token, validate_token
-from app.utils.db import SupabaseTable, UnknownDatabaseProvider
-from app.utils.image import generate_thumbnail
-from app.utils.storage import SupabaseStorage, UnknownStorageProvider
-from app.utils.supabase import supabase_client
+from app.utils.image import generate_thumbnail, upload_original, upload_thumbnail
 
 SUPPORTED_CONTENT_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
 
-match DATABASE_PROVIDER:
-    case "supabase":
-        db_client = supabase_client
-        db_handler = SupabaseTable
-    case _:
-        raise UnknownDatabaseProvider(f"Unknown database provider: {DATABASE_PROVIDER}")
-
-match STORAGE_PROVIDER:
-    case "supabase":
-        storage_client = supabase_client
-        storage_handler = SupabaseStorage
-    case _:
-        raise UnknownStorageProvider(f"Unknown storage provider: {STORAGE_PROVIDER}")
 
 router = APIRouter()
 
@@ -37,9 +32,26 @@ async def upload_image(
     title: Annotated[str, Form(...)],
     labels: Annotated[str, Form(...)],
     access_token: Annotated[str, Depends(get_access_token)],
+    db_client: Annotated[DatabaseClient, Depends(get_db_client)],
+    storage_client: Annotated[StorageClient, Depends(get_storage_client)],
+    background_tasks: BackgroundTasks,
 ):
     """
-    Handle image upload.
+    Upload an image to TermiPics. Access token is required — this endpoint is only accessible to the user it belongs to.
+
+    Form body:
+
+        - file (jpeg/png/gif/webp)
+            The image file to be uploaded.
+        - title (str)
+            Little something to describe this image.
+        - labels (str)
+            Comma-separated labels for the image.
+
+    Response:
+
+        - image_id (str)
+            UID of the newly uploaded image.
     """
     payload = validate_token(access_token)
     user_uid = payload["sub"]
@@ -55,8 +67,8 @@ async def upload_image(
     size = len(image)
     labels_cleaned = [label.strip() for label in labels.split(",")] if labels else []
 
-    with db_client() as client:
-        db = db_handler(client)
+    db = get_db_handler(db_client)
+    try:
         image_uid = db.insert_new_image(
             user_uid=user_uid,
             title=title,
@@ -65,45 +77,98 @@ async def upload_image(
             size=size,
             labels=labels_cleaned,
         )
+    except APIError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error connecting to database.",
+        )
     # 2. generate thumbnail
     thumbnail = generate_thumbnail(image)
-    # 3. save image and thumbnail in storage
-    with storage_client() as client:
-        storage = storage_handler(client)
-        storage.upload_original(image_uid=image_uid, file=image, content_type=file.content_type)
-        storage.upload_thumbnail(image_uid=image_uid, file=thumbnail)
+    # 3. save image and thumbnail in storage using background tasks
+    background_tasks.add_task(
+        upload_original,
+        file=image,
+        image=image_uid,
+        db_client=db_client,
+        storage_client=storage_client,
+    )
+    background_tasks.add_task(
+        upload_thumbnail, file=thumbnail, image=image_uid, storage_client=storage_client
+    )
+
     return ImageUploadResponse(image_uid=image_uid)
 
 
-@router.get("/{image_uid}")
-async def get_original_image(image_uid: Annotated[str, Path(...)]):
-    """
-    Get original image. Open to public.
-    """
-    with db_client() as client:
-        db = db_handler(client)
-        if not db.is_image_exists(image_uid):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
-        format = db.get_image_info(image_uid=image_uid, keys=["format"])["format"]
-    with storage_client() as client:
-        storage = storage_handler(client)
-        image_bytes = storage.get_original(image_uid=image_uid, format=format)
-        return StreamingResponse(io.BytesIO(image_bytes), media_type=f"image/{format}")
-
-
-@router.get("/thumbnail/{image_uid}")
-async def get_thumbnail(
-    image_uid: Annotated[str, Path(...)], access_token: Annotated[str, Depends(get_access_token)]
+@router.get("/{image_uid}", status_code=status.HTTP_200_OK)
+async def get_original_image(
+    image_uid: Annotated[str, Path(...)],
+    db_client: Annotated[DatabaseClient, Depends(get_db_client)],
+    storage_client: Annotated[StorageClient, Depends(get_storage_client)],
 ):
     """
-    Get thumbnail image. Should only be accessible to the owner of the image.
+    Retrieve the uploaded image by image UID. This endpoint is open to public.
+
+    Response:
+
+        - The requested image in bytes.
     """
-    validate_token(access_token)
-    with db_client() as client:
-        db = db_handler(client)
+    db = get_db_handler(db_client)
+    try:
         if not db.is_image_exists(image_uid):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
-    with storage_client() as client:
-        storage = storage_handler(client)
-        image_bytes = storage.get_thumbnail(image_uid=image_uid)
-        return StreamingResponse(io.BytesIO(image_bytes), media_type="image/png")
+    except APIError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error connecting to database.",
+        )
+
+    format = db.get_image_info(image_uid=image_uid, keys=["format"])["format"]
+    storage = get_storage_handler(storage_client)
+    try:
+        image_bytes = storage.get_original(image_uid=image_uid, format=format)
+    except APIError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error connecting to storage."
+        )
+
+    return Response(content=image_bytes, media_type=f"image/{format}")
+
+
+@router.get("/thumbnail/{image_uid}", status_code=status.HTTP_200_OK)
+async def get_thumbnail(
+    image_uid: Annotated[str, Path(...)],
+    access_token: Annotated[str, Depends(get_access_token)],
+    db_client: Annotated[DatabaseClient, Depends(get_db_client)],
+    storage_client: Annotated[StorageClient, Depends(get_storage_client)],
+):
+    """
+    Retrieve the thumbnail of the uploaded image by image UID. Access token is required — this endpoint is only accessible to the user it belongs to.
+
+    Header Parameters:
+
+        - Authorization: Bearer <access_token>
+
+    Response:
+
+        - The thumbnail of the requested image in bytes.
+    """
+    validate_token(access_token)
+    db = get_db_handler(db_client)
+    try:
+        if not db.is_image_exists(image_uid):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+    except APIError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error connecting to database.",
+        )
+
+    storage = get_storage_handler(storage_client)
+    try:
+        thumbnail_bytes = storage.get_thumbnail(image_uid=image_uid)
+    except APIError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error connecting to storage."
+        )
+
+    return Response(content=thumbnail_bytes, media_type="image/png")

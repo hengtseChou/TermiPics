@@ -911,6 +911,43 @@ wheels = [
 ]
 
 [[package]]
+name = "server"
+version = "0"
+source = { virtual = "." }
+dependencies = [
+    { name = "bcrypt" },
+    { name = "fastapi", extra = ["standard"] },
+    { name = "google-auth" },
+    { name = "pillow" },
+    { name = "pyjwt" },
+    { name = "python-dotenv" },
+    { name = "python-multipart" },
+    { name = "requests" },
+    { name = "supabase" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bcrypt", specifier = ">=4.3.0" },
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
+    { name = "google-auth", specifier = ">=2.39.0" },
+    { name = "pillow", specifier = ">=11.2.1" },
+    { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "python-dotenv", specifier = ">=1.1.0" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
+    { name = "requests", specifier = ">=2.32.3" },
+    { name = "supabase", specifier = ">=2.15.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "ruff", specifier = ">=0.11.7" }]
+
+[[package]]
 name = "shellingham"
 version = "1.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1000,43 +1037,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/9f/74/4f9e23690d2dfc0af
 wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/51/b0bb6d405c053ecf9c51267b5a429424cab9ae3de229a1dfda3197ab251f/supafunc-0.9.4-py3-none-any.whl", hash = "sha256:2b34a794fb7930953150a434cdb93c24a04cf526b2f51a9e60b2be0b86d44fb2", size = 7792, upload-time = "2025-03-26T12:40:02.848Z" },
 ]
-
-[[package]]
-name = "termipics"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "bcrypt" },
-    { name = "fastapi", extra = ["standard"] },
-    { name = "google-auth" },
-    { name = "pillow" },
-    { name = "pyjwt" },
-    { name = "python-dotenv" },
-    { name = "python-multipart" },
-    { name = "requests" },
-    { name = "supabase" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "bcrypt", specifier = ">=4.3.0" },
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
-    { name = "google-auth", specifier = ">=2.39.0" },
-    { name = "pillow", specifier = ">=11.2.1" },
-    { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "python-dotenv", specifier = ">=1.1.0" },
-    { name = "python-multipart", specifier = ">=0.0.20" },
-    { name = "requests", specifier = ">=2.32.3" },
-    { name = "supabase", specifier = ">=2.15.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.11.7" }]
 
 [[package]]
 name = "typer"

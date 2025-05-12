@@ -1,8 +1,14 @@
 from abc import ABC, abstractmethod
+from typing import Union
 
 from fastapi import HTTPException, status
 from postgrest.exceptions import APIError
 from supabase.client import Client as SupabaseClient
+
+from app.config import STORAGE_PROVIDER
+from app.utils.supabase import supabase_client
+
+StorageClient = Union[SupabaseClient]
 
 
 class UnknownStorageProvider(Exception):
@@ -97,3 +103,11 @@ class SupabaseStorage(StorageOperator):
 
     def delete_thumbnail(self, image_uid: str):
         pass
+
+
+match STORAGE_PROVIDER:
+    case "supabase":
+        get_storage_client = supabase_client
+        get_storage_handler = SupabaseStorage
+    case _:
+        raise UnknownStorageProvider(f"Unknown storage provider: {STORAGE_PROVIDER}")
