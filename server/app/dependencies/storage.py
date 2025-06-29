@@ -8,7 +8,7 @@ from supabase.client import Client as SupabaseClient
 from app.config import STORAGE_PROVIDER
 from app.utils.supabase import supabase_client
 
-StorageClient = Union[SupabaseClient]
+type StorageClient = Union[SupabaseClient]
 
 
 class UnknownStorageProvider(Exception):
@@ -51,7 +51,7 @@ class SupabaseStorage(StorageOperator):
     def upload_original(self, image_uid: str, file: bytes, content_type: str):
         try:
             self.client.storage.from_("images").upload(
-                path=f"original/{image_uid}/{content_type.split('/')[1]}",
+                path=f"original/{image_uid}.{content_type.split('/')[1]}",
                 file=file,
                 file_options={"content-type": content_type},
             )

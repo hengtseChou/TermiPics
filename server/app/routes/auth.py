@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 import httpx
@@ -104,7 +105,7 @@ async def login(
     access_token = create_access_token(user_uid=user_uid)
     refresh_token = create_refresh_token(user_uid=user_uid)
     try:
-        db.update_last_active(user_uid)
+        db.update_user_info(user_uid=user_uid, data={"last_active": datetime.now(UTC).isoformat()})
     except APIError:
         raise HTTPException(status_code=500, detail="Error connecting to database")
 
@@ -170,7 +171,7 @@ async def continue_with_google(
     db = get_db_handler(db_client)
     if db.is_email_exists(email, auth_provider="google"):
         user_uid = db.get_user_uid(email=email, auth_provider="google")
-        db.update_last_active(user_uid)
+        db.update_user_info(user_uid=user_uid, data={"last_active": datetime.now(UTC).isoformat()})
     else:
         username = email.split("@")[0]
         user_uid = db.insert_new_user(
@@ -206,7 +207,7 @@ async def verify_token(request: VerificationRequest):
             UID for the user associated with the token.
     """
     payload = validate_token(request.token)
-    user_uid = payload["user_uid"]
+    user_uid = payload["sub"]
 
     return VerificationResponse(
         user_uid=user_uid,
@@ -233,7 +234,7 @@ async def refresh_token(request: RefreshRequest):
             UID for the user associated with the token.
     """
     payload = validate_token(request.token)
-    user_uid = payload["user_uid"]
+    user_uid = payload["sub"]
     access_token = create_access_token(user_uid=user_uid)
     refresh_token = request.token
 

@@ -126,4 +126,4 @@ async def query_images(
     if not image_uid:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No image can be found.")
 
-    return ImageQueryResponse(image_uid)
+    return ImageQueryResponse(image_uid=image_uid)

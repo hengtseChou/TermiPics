@@ -1,7 +1,7 @@
 """
 The database client objects and handler objects.
 
-We don't deal with the database error here. Will be handled in the api routes.
+We don't deal with the database error here. They'll be handled in the api routes.
 """
 
 from abc import ABC, abstractmethod
@@ -16,7 +16,7 @@ from app.models import Image, User
 from app.utils.auth import hash_password
 from app.utils.supabase import supabase_client
 
-DatabaseClient = Union[SupabaseClient]
+type DatabaseClient = Union[SupabaseClient]
 
 
 class UnknownDatabaseProvider(Exception):
@@ -167,7 +167,7 @@ class SupabaseTable(TableOperator):
             )
         else:
             raise ValueError("Invalid auth provider")
-        self.client.table("users").insert(new_user.dict()).execute()
+        self.client.table("users").insert(new_user.model_dump()).execute()
         return user_uid
 
     def get_user_uid(
@@ -223,7 +223,7 @@ class SupabaseTable(TableOperator):
             updated_at=updated_at,
             is_deleted=False,
         )
-        self.client.table("images").insert(new_image.dict()).execute()
+        self.client.table("images").insert(new_image.model_dump()).execute()
         return image_uid
 
     def is_image_exists(self, image_uid: str) -> bool:

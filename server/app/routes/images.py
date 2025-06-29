@@ -20,7 +20,7 @@ from app.schemas import ImageUploadResponse
 from app.utils.auth import get_access_token, validate_token
 from app.utils.image import generate_thumbnail, upload_original, upload_thumbnail
 
-SUPPORTED_CONTENT_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
+SUPPORTED_CONTENT_TYPES = {"image/png", "image/jpeg"}
 
 
 router = APIRouter()
@@ -60,12 +60,12 @@ async def upload_image(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported or missing content type."
         )
+    file_name = file.filename
     format = file.content_type.split("/")[1]
-    file_name = file.filename if file.filename is not None else f"untitled.{format}"
 
     image = await file.read()
     size = len(image)
-    labels_cleaned = [label.strip() for label in labels.split(",")] if labels else []
+    labels_split = [label.strip() for label in labels.split(",")] if labels else []
 
     db = get_db_handler(db_client)
     try:
@@ -75,8 +75,9 @@ async def upload_image(
             file_name=file_name,
             format=format,
             size=size,
-            labels=labels_cleaned,
+            labels=labels_split,
         )
+
     except APIError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -88,12 +89,12 @@ async def upload_image(
     background_tasks.add_task(
         upload_original,
         file=image,
-        image=image_uid,
+        image_uid=image_uid,
         db_client=db_client,
         storage_client=storage_client,
     )
     background_tasks.add_task(
-        upload_thumbnail, file=thumbnail, image=image_uid, storage_client=storage_client
+        upload_thumbnail, file=thumbnail, image_uid=image_uid, storage_client=storage_client
     )
 
     return ImageUploadResponse(image_uid=image_uid)
