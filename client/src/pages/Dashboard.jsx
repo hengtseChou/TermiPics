@@ -5,6 +5,7 @@ import { Upload } from "lucide-react";
 
 import Modal from "../components/ImageUpload";
 import Navbar from "../components/Navbar";
+import showToast from "../components/Notification";
 import RollingAsciiAnimation from "../components/RollingArt";
 import { getCookie } from "../utils/cookies";
 
@@ -14,30 +15,51 @@ function Dashboard() {
 
   const [username, setUsername] = useState(null);
   const [imageCount, setImageCount] = useState(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [images, setImages] = useState([]);
+  const [allLabels, setAllLabels] = useState([]);
 
-  // TODO: a function to fetch image with pagination
-  // TODO: a function to clear up the image list
+  const imagesPerPage = 50;
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [toggledLabels, setToggledLabels] = useState([]);
+  // TODO: add states for image deletion
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      const access_token = getCookie("access_token");
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/info`, {
-          params: { keys: "images,username" },
-          headers: { Authorization: `Bearer ${access_token}` },
-        });
-        setImageCount(response.data.images);
-        setUsername(response.data.username);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching image count:", error);
-      }
-    };
-    fetchUserInfo();
+    pageInitialize();
   }, []);
+
+  const pageInitialize = async () => {
+    const access_token = getCookie("access_token");
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/info`, {
+        params: { keys: "image_count" },
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      setImageCount(response.data.image_count);
+      if (imageCount > 0) {
+        setTotalPages(Math.ceil(imageCount / imagesPerPage));
+        fetchImages();
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching image count:", error);
+    }
+  };
+
+  const fetchImages = async () => {
+    const access_token = getCookie("access_token");
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/images`, {
+        params: { page: page, sort_by: sortBy, sort_order: sortOrder, labels: toggledLabels },
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      setImages(response.data.images);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    }
+  };
 
   const openModal = () => {
     setIsModalOpened(true);
@@ -55,15 +77,40 @@ function Dashboard() {
       formData.append("title", newUpload.title);
       formData.append("labels", newUpload.labels);
 
-      await axios.post(`${import.meta.env.VITE_SERVER_URL}/images/upload`, formData, {
+      await axios.post(`${import.meta.env.VITE_SERVER_URL}/image/upload`, formData, {
         headers: {
           Authorization: `Bearer ${access_token}`,
           "Content-Type": "multipart/form-data",
         },
       });
+
+      showToast({
+        title: "Success",
+        msg: "Image uploaded successfully",
+        type: "success",
+      });
+
+      // Update the state first
+      const newImageCount = imageCount + 1;
+      setImageCount(newImageCount);
+      setTotalPages(Math.ceil(newImageCount / imagesPerPage));
+
+      // Refresh images if we have any
+      if (newImageCount > 0) {
+        fetchImages();
+      }
+
+      // Close modal - this will trigger the modal's closing animation
       closeModal();
     } catch (error) {
       console.error("Error uploading image:", error);
+      showToast({
+        title: "Error",
+        msg: error.response?.data?.message || "Failed to upload image",
+        type: "error",
+      });
+      // Important: throw the error so Modal can reset its loading state
+      throw error;
     }
   };
 
@@ -104,8 +151,13 @@ function Dashboard() {
             </>
           ) : (
             <>
-              <p>Explore your uploaded images below.</p>
-              {/* Gallery content would go here */}
+              <div className="grid grid-cols-3 gap-4">
+                {images.map((image, index) => (
+                  <div key={index} className="border border-green-700 p-2">
+                    <img src={image.url} alt={image.title} className="w-full h-auto object-cover" />
+                  </div>
+                ))}
+              </div>
             </>
           )}
         </div>

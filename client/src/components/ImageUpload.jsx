@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 
-import { Image as ImageIcon, Upload, X } from "lucide-react";
+import { Image as ImageIcon, Upload, X, Loader2 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
+
+import showToast from "./Notification";
 
 function Modal({ isOpened, onClose, onUpload }) {
   const [file, setFile] = useState(null);
+  const [title, setTitle] = useState("");
+  const [labels, setLabels] = useState("");
+
   const [preview, setPreview] = useState(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [fileSize, setFileSize] = useState(0);
-
-  const [title, setTitle] = useState("");
-  const [labels, setLabels] = useState("");
 
   // isOpened: A prop passed from the parent component that controls whether the modal should be shown or hidden
   // isVisible: A local state that determines if the modal is actually rendered in the DOM
@@ -21,6 +23,8 @@ function Modal({ isOpened, onClose, onUpload }) {
     IDLE: null,
   };
   const [animation, setAnimation] = useState(ANIMATION_STATES.IDLE);
+  const [uploadDisabled, setUploadDisabled] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -46,19 +50,50 @@ function Modal({ isOpened, onClose, onUpload }) {
   });
 
   useEffect(() => {
-    if (isOpened) {
+    if (!file || !title) {
+      setUploadDisabled(true);
+    } else {
+      setUploadDisabled(false);
+    }
+  }, [file, title]);
+
+  useEffect(() => {
+    if (fileSize > 1000 * 1000 * 10) {
+      setUploadDisabled(true);
+      showToast({
+        title: "Error",
+        msg: "File size exceeds the limit of 10MB",
+        type: "error",
+      });
+    }
+  }, [file]);
+
+  // Handle opening the modal
+  useEffect(() => {
+    if (isOpened && !isVisible) {
       setIsVisible(true);
       setAnimation(ANIMATION_STATES.ENTER);
     }
-  }, [isOpened]);
+  }, [isOpened, isVisible]);
+
+  // Handle closing the modal when parent sets isOpened to false
+  useEffect(() => {
+    if (!isOpened && isVisible) {
+      handleClose();
+    }
+  }, [isOpened, isVisible]);
 
   const handleClose = () => {
     setAnimation(ANIMATION_STATES.LEAVE);
     setTimeout(() => {
-      onClose(); // Notify parent component to close the modal
       resetForm();
       setIsVisible(false);
       setAnimation(ANIMATION_STATES.IDLE);
+      // Only call onClose if the modal is actually being closed by user action
+      // (not when parent already set isOpened to false)
+      if (isOpened) {
+        onClose();
+      }
     }, 300);
   };
 
@@ -68,14 +103,35 @@ function Modal({ isOpened, onClose, onUpload }) {
     setTitle("");
     setLabels("");
     setDimensions({ width: 0, height: 0 });
+    setFileSize(0);
+    setIsUploading(false);
+    setUploadDisabled(true);
   };
 
-  const handleUpload = () => {
-    onUpload({
-      file,
-      title,
-      labels,
-    });
+  const handleUpload = async () => {
+    setIsUploading(true);
+    setUploadDisabled(true);
+
+    try {
+      // Call the parent's onUpload function
+      await onUpload({
+        file,
+        title,
+        labels,
+      });
+
+      // Upload successful - parent will handle closing the modal
+      // Don't reset isUploading here, let the close animation handle it
+    } catch (error) {
+      // If upload fails, reset the uploading state
+      setIsUploading(false);
+      setUploadDisabled(false);
+      showToast({
+        title: "Error",
+        msg: "Failed to upload image",
+        type: "error",
+      });
+    }
   };
 
   if (!isVisible && !isOpened) return null;
@@ -94,7 +150,12 @@ function Modal({ isOpened, onClose, onUpload }) {
         {/* Modal header */}
         <div className="flex justify-between items-center px-6 py-4 border-green-700 border-b">
           <h3 className="font-medium text-green-500 text-lg">Upload Image</h3>
-          <button type="button" onClick={handleClose} className="text-green-500 hover:text-green-400 animation-colors">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="text-green-500 hover:text-green-400 animation-colors"
+            disabled={isUploading}
+          >
             <X size={20} />
           </button>
         </div>
@@ -130,6 +191,7 @@ function Modal({ isOpened, onClose, onUpload }) {
                     onChange={e => setTitle(e.target.value)}
                     className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
                     placeholder=""
+                    disabled={isUploading}
                   />
                 </div>
 
@@ -144,6 +206,7 @@ function Modal({ isOpened, onClose, onUpload }) {
                     onChange={e => setLabels(e.target.value)}
                     className="bg-gray-800 px-3 py-2 rounded-md focus:outline-none w-full text-green-300"
                     placeholder="Enter labels separated by commas"
+                    disabled={isUploading}
                   />
                 </div>
               </div>
@@ -169,15 +232,24 @@ function Modal({ isOpened, onClose, onUpload }) {
           <button
             type="button"
             onClick={handleUpload}
-            disabled={!title || !file}
+            disabled={uploadDisabled || isUploading}
             className={`flex items-center px-4 py-2 rounded-md ${
-              !title || !file
+              uploadDisabled || isUploading
                 ? "bg-gray-700 cursor-not-allowed text-gray-500"
                 : "bg-gray-800 hover:bg-gray-700 text-green-300 hover:cursor-pointer"
             } animation-colors`}
           >
-            <Upload size={16} className="mr-2" />
-            Upload
+            {isUploading ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload size={16} className="mr-2" />
+                Upload
+              </>
+            )}
           </button>
         </div>
       </div>
