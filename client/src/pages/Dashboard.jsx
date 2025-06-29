@@ -38,24 +38,28 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${access_token}` },
       });
       setImageCount(response.data.image_count);
-      if (imageCount > 0) {
-        setTotalPages(Math.ceil(imageCount / imagesPerPage));
-        fetchImages();
-      }
       setLoading(false);
     } catch (error) {
       console.error("Error fetching image count:", error);
     }
   };
 
+  useEffect(() => {
+    if (imageCount > 0) {
+      setTotalPages(Math.ceil(imageCount / imagesPerPage));
+      fetchImages();
+    }
+  }, [imageCount]);
+
   const fetchImages = async () => {
     const access_token = getCookie("access_token");
     try {
+      const labels = toggledLabels.length > 0 ? toggledLabels.join(",") : "";
       const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/images`, {
-        params: { page: page, sort_by: sortBy, sort_order: sortOrder, labels: toggledLabels },
+        params: { page: page, sort_by: sortBy, sort_order: sortOrder, labels: labels },
         headers: { Authorization: `Bearer ${access_token}` },
       });
-      setImages(response.data.images);
+      setImages(response.data.image_uid);
     } catch (error) {
       console.error("Error fetching images:", error);
     }

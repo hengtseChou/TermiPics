@@ -9,7 +9,7 @@ SUPPORTED_FORMATS = {"PNG", "JPEG"}
 THUMBNAIL_SIZE = (128, 128)
 
 
-class UnsupportedFormatError(Exception):
+class UnsupportedFormat(Exception):
     pass
 
 
@@ -24,10 +24,10 @@ def generate_thumbnail(image_bytes: bytes) -> bytes:
     try:
         image = Image.open(BytesIO(image_bytes))
     except UnidentifiedImageError:
-        raise UnsupportedFormatError("Cannot identify image format.")
+        raise UnsupportedFormat("Cannot identify image format.")
 
     if image.format.upper() not in SUPPORTED_FORMATS:
-        raise UnsupportedFormatError(f"Unsupported format: {image.format}")
+        raise UnsupportedFormat(f"Unsupported format: {image.format}")
 
     width, height = image.size
     min_dim = min(width, height)
@@ -49,8 +49,13 @@ def upload_original(
     format = db.get_image_info(image_uid=image_uid, keys=["format"]).get("format")
     storage = get_storage_handler(storage_client)
     storage.upload_original(image_uid=image_uid, file=file, content_type=f"image/{format}")
+    db.update_image_info(image_uid=image_uid, data={"is_uploaded": True})
 
 
-def upload_thumbnail(file: bytes, image_uid: str, storage_client: StorageClient) -> None:
+def upload_thumbnail(
+    file: bytes, image_uid: str, db_client: DatabaseClient, storage_client: StorageClient
+) -> None:
     storage = get_storage_handler(storage_client)
     storage.upload_thumbnail(image_uid=image_uid, file=file)
+    db = get_db_handler(db_client)
+    db.update_image_info(image_uid=image_uid, data={"is_thumbnail_uploaded": True})

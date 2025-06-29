@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import (
@@ -77,7 +78,16 @@ async def upload_image(
             size=size,
             labels=labels_split,
         )
-
+        current_image_count = db.get_user_info(user_uid=user_uid, keys=["image_count"]).get(
+            "image_count"
+        )
+        db.update_user_info(
+            user_uid=user_uid,
+            data={
+                "image_count": current_image_count + 1,
+                "last_active": datetime.now(UTC).isoformat(),
+            },
+        )
     except APIError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -94,7 +104,11 @@ async def upload_image(
         storage_client=storage_client,
     )
     background_tasks.add_task(
-        upload_thumbnail, file=thumbnail, image_uid=image_uid, storage_client=storage_client
+        upload_thumbnail,
+        file=thumbnail,
+        image_uid=image_uid,
+        db_client=db_client,
+        storage_client=storage_client,
     )
 
     return ImageUploadResponse(image_uid=image_uid)

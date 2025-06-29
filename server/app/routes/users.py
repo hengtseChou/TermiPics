@@ -103,7 +103,6 @@ async def query_images(
         - image_uid (list[str])
             A list of image UIDs matching the filters.
     """
-
     payload = validate_token(access_token)
     user_uid = payload.get("sub")
     if not user_uid:

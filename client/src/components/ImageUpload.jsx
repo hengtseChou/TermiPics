@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Image as ImageIcon, Upload, X, Loader2 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
@@ -173,7 +173,7 @@ function Modal({ isOpened, onClose, onUpload }) {
               <div className="flex flex-col justify-center items-center space-y-2">
                 <ImageIcon className="w-12 h-12 text-green-300" />
                 <p className="text-green-300 text-sm">Drag and drop your image here, or click to select</p>
-                <p className="text-green-500 text-xs">Supported formats: JPEG, JPG, PNG</p>
+                <p className="text-green-500 text-xs">Supported formats: JPEG/JPG, PNG</p>
               </div>
             </div>
           ) : (
