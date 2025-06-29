@@ -1,3 +1,4 @@
 .env
 *.sh
+color_schemas.md
 __pycache__/
