@@ -137,6 +137,7 @@ async def get_original_image(
             detail="Error connecting to database.",
         )
 
+    content_type = db.get_image_info(image_uid, keys=["content_type"]).get("content_type")
     storage = get_storage_handler(storage_client)
     try:
         image_bytes = storage.get_original(image_uid=image_uid)
@@ -145,7 +146,7 @@ async def get_original_image(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error connecting to storage."
         )
 
-    return Response(content=image_bytes, media_type=f"image/{format}")
+    return Response(content=image_bytes, media_type=content_type)
 
 
 @router.get("/thumbnail/{image_uid}", status_code=status.HTTP_200_OK)
