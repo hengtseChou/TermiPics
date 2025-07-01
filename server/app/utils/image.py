@@ -46,9 +46,9 @@ def upload_original(
     file: bytes, image_uid: str, db_client: DatabaseClient, storage_client: StorageClient
 ) -> None:
     db = get_db_handler(db_client)
-    format = db.get_image_info(image_uid=image_uid, keys=["format"]).get("format")
+    content_type = db.get_image_info(image_uid=image_uid, keys=["content_type"]).get("content_type")
     storage = get_storage_handler(storage_client)
-    storage.upload_original(image_uid=image_uid, file=file, content_type=f"image/{format}")
+    storage.upload_original(image_uid=image_uid, file=file, content_type=content_type)
     db.update_image_info(image_uid=image_uid, data={"is_uploaded": True})
 
 

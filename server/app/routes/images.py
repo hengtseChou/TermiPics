@@ -62,7 +62,7 @@ async def upload_image(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported or missing content type."
         )
     file_name = file.filename
-    format = file.content_type.split("/")[1]
+    content_type = file.content_type
 
     image = await file.read()
     size = len(image)
@@ -74,7 +74,7 @@ async def upload_image(
             user_uid=user_uid,
             title=title,
             file_name=file_name,
-            format=format,
+            content_type=content_type,
             size=size,
             labels=labels_split,
         )
@@ -137,10 +137,9 @@ async def get_original_image(
             detail="Error connecting to database.",
         )
 
-    format = db.get_image_info(image_uid=image_uid, keys=["format"])["format"]
     storage = get_storage_handler(storage_client)
     try:
-        image_bytes = storage.get_original(image_uid=image_uid, format=format)
+        image_bytes = storage.get_original(image_uid=image_uid)
     except APIError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error connecting to storage."

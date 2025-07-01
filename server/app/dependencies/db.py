@@ -206,7 +206,13 @@ class SupabaseTable(TableOperator):
         self.client.table("users").update(data).eq("user_uid", user_uid).execute()
 
     def insert_new_image(
-        self, user_uid: str, title: str, file_name: str, format: str, size: int, labels: list[str]
+        self,
+        user_uid: str,
+        title: str,
+        file_name: str,
+        content_type: str,
+        size: int,
+        labels: list[str],
     ) -> str:
         image_uid = str(uuid4())
         created_at = datetime.now(UTC).isoformat()
@@ -216,7 +222,7 @@ class SupabaseTable(TableOperator):
             user_uid=user_uid,
             title=title,
             file_name=file_name,
-            format=format,
+            content_type=content_type,
             size=size,
             labels=labels,
             created_at=created_at,

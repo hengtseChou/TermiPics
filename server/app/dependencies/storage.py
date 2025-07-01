@@ -51,7 +51,7 @@ class SupabaseStorage(StorageOperator):
     def upload_original(self, image_uid: str, file: bytes, content_type: str):
         try:
             self.client.storage.from_("images").upload(
-                path=f"original/{image_uid}.{content_type.split('/')[1]}",
+                path=f"original/{image_uid}",
                 file=file,
                 file_options={"content-type": content_type},
             )
@@ -64,7 +64,7 @@ class SupabaseStorage(StorageOperator):
     def upload_thumbnail(self, image_uid: str, file: bytes):
         try:
             self.client.storage.from_("images").upload(
-                path=f"thumbnail/{image_uid}.png",
+                path=f"thumbnail/{image_uid}",
                 file=file,
                 file_options={"content-type": "image/png"},
             )
@@ -74,11 +74,9 @@ class SupabaseStorage(StorageOperator):
                 detail="Error connecting to database",
             )
 
-    def get_original(self, image_uid: str, format: str) -> bytes:
+    def get_original(self, image_uid: str) -> bytes:
         try:
-            response = self.client.storage.from_("images").download(
-                path=f"original/{image_uid}.{format}"
-            )
+            response = self.client.storage.from_("images").download(path=f"original/{image_uid}")
             return response
         except APIError:
             raise HTTPException(
@@ -88,9 +86,7 @@ class SupabaseStorage(StorageOperator):
 
     def get_thumbnail(self, image_uid: str):
         try:
-            response = self.client.storage.from_("images").download(
-                path=f"thumbnail/{image_uid}.png"
-            )
+            response = self.client.storage.from_("images").download(path=f"thumbnail/{image_uid}")
             return response
         except APIError:
             raise HTTPException(

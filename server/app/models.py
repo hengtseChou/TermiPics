@@ -21,7 +21,7 @@ class Image(BaseModel):
     user_uid: str
     title: str
     file_name: str
-    format: str
+    content_type: str
     size: int
     created_at: str
     updated_at: str
