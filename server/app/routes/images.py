@@ -13,7 +13,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import StreamingResponse
 from postgrest.exceptions import APIError
 
 from app.dependencies.db import DatabaseClient, get_db_client, get_db_handler
@@ -190,10 +190,11 @@ async def get_thumbnail(
 
     storage = get_storage_handler(storage_client)
     try:
-        thumbnail_bytes = storage.get_thumbnail(image_uid=image_uid)
+        image_url = storage.get_thumbnail_url(image_uid)
+        r = requests.get(image_url, stream=True)
     except APIError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error connecting to storage."
         )
 
-    return Response(content=thumbnail_bytes, media_type="image/png")
+    return StreamingResponse(r.raw, media_type="image/png")
