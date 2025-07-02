@@ -13,6 +13,7 @@ class User(BaseModel):
     password: Optional[str] = None
     avatar: Optional[str] = None
     image_count: int = 0
+    labels: list[str]
     is_premium: bool = False
 
 

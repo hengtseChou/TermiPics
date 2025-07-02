@@ -48,7 +48,7 @@ async def upload_image(
 
     Form body:
 
-        - file (jpeg/png/gif/webp)
+        - file (jpeg/png)
             The image file to be uploaded.
         - title (str)
             Little something to describe this image.
@@ -62,6 +62,7 @@ async def upload_image(
     """
     payload = validate_token(access_token)
     user_uid = payload["sub"]
+
     # 1. enable image streaming
     if file.content_type not in SUPPORTED_CONTENT_TYPES:
         raise HTTPException(
@@ -72,8 +73,7 @@ async def upload_image(
 
     image = await file.read()
     image = enable_image_streaming(image, content_type)
-    size = len(image)
-    labels_split = [label.strip() for label in labels.split(",")] if labels else []
+    labels_cleaned = [label.strip() for label in labels.split(",")] if labels else []
 
     # 2. insert new image into the database
     db = get_db_handler(db_client)
@@ -83,17 +83,18 @@ async def upload_image(
             title=title,
             file_name=file_name,
             content_type=content_type,
-            size=size,
-            labels=labels_split,
+            size=len(image),
+            labels=labels_cleaned,
         )
-        current_image_count = db.get_user_info(user_uid=user_uid, keys=["image_count"]).get(
-            "image_count"
-        )
+        user_info = db.get_user_info(user_uid=user_uid, keys=["image_count", "labels"])
+        current_image_count = user_info.get("image_count")
+        user_labels = list(set(user_info.get("labels")) | set(labels_cleaned))
         db.update_user_info(
             user_uid=user_uid,
             data={
                 "image_count": current_image_count + 1,
                 "last_active": datetime.now(UTC).isoformat(),
+                "labels": user_labels,
             },
         )
     except APIError:
@@ -101,10 +102,12 @@ async def upload_image(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error connecting to database.",
         )
-    # 2. generate thumbnail
+
+    # 3. generate thumbnail
     thumbnail = generate_thumbnail(image)
     thumbnail = enable_image_streaming(image, "image/png")
-    # 3. save image and thumbnail in storage using background tasks
+
+    # 4. save image and thumbnail in storage using background tasks
     background_tasks.add_task(
         upload_original,
         file=image,

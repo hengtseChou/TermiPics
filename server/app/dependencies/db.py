@@ -154,6 +154,7 @@ class SupabaseTable(TableOperator):
                 auth_provider="email",
                 created_at=created_at,
                 last_active=last_active,
+                labels=[],
             )
         elif auth_provider == "google":
             new_user = User(
@@ -164,6 +165,7 @@ class SupabaseTable(TableOperator):
                 created_at=created_at,
                 last_active=last_active,
                 avatar=avatar,
+                labels=[],
             )
         else:
             raise ValueError("Invalid auth provider")
