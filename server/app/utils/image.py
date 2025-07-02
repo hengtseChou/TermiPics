@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageFile, UnidentifiedImageError
 
 from app.dependencies.db import DatabaseClient, get_db_handler
 from app.dependencies.storage import StorageClient, get_storage_handler
@@ -38,6 +38,38 @@ def generate_thumbnail(image_bytes: bytes) -> bytes:
     thumbnail = image_cropped.resize(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
     buffer = BytesIO()
     thumbnail.save(buffer, format="PNG")
+
+    return buffer.getvalue()
+
+
+def is_streaming_optimized(image: ImageFile, content_type: str) -> bool:
+    if content_type == "image/jpeg":
+        return image.info.get("progressive", False)
+    elif content_type == "image/png":
+        return image.info.get("interlace", False)
+    else:
+        raise ValueError(f"Unsupported content type: {content_type}")
+
+
+def enable_streaming_image(image_bytes: bytes, content_type: str) -> bytes:
+    """
+    Convert image bytes into a progressive JPEG or interlaced PNG,
+    preserving transparency and format when appropriate.
+
+    Returns:
+        Converted image bytes.
+    """
+    image = Image.open(BytesIO(image_bytes))
+    if is_streaming_optimized(image, content_type):
+        return image_bytes
+
+    buffer = BytesIO()
+    if content_type == "image/jpeg":
+        image.save(buffer, format="JPEG", progressive=True)
+    elif content_type == "image/png":
+        image.save(buffer, format="PNG", interlace=True)
+    else:
+        raise ValueError(f"Unsupported content type: {content_type}")
 
     return buffer.getvalue()
 

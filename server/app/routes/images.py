@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
+import requests
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -12,14 +13,19 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from postgrest.exceptions import APIError
 
 from app.dependencies.db import DatabaseClient, get_db_client, get_db_handler
 from app.dependencies.storage import StorageClient, get_storage_client, get_storage_handler
 from app.schemas import ImageUploadResponse
 from app.utils.auth import get_access_token, validate_token
-from app.utils.image import generate_thumbnail, upload_original, upload_thumbnail
+from app.utils.image import (
+    enable_image_streaming,
+    generate_thumbnail,
+    upload_original,
+    upload_thumbnail,
+)
 
 SUPPORTED_CONTENT_TYPES = {"image/png", "image/jpeg"}
 
@@ -56,7 +62,7 @@ async def upload_image(
     """
     payload = validate_token(access_token)
     user_uid = payload["sub"]
-    # 1. insert new image into the database
+    # 1. enable image streaming
     if file.content_type not in SUPPORTED_CONTENT_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported or missing content type."
@@ -65,9 +71,11 @@ async def upload_image(
     content_type = file.content_type
 
     image = await file.read()
+    image = enable_image_streaming(image, content_type)
     size = len(image)
     labels_split = [label.strip() for label in labels.split(",")] if labels else []
 
+    # 2. insert new image into the database
     db = get_db_handler(db_client)
     try:
         image_uid = db.insert_new_image(
@@ -95,6 +103,7 @@ async def upload_image(
         )
     # 2. generate thumbnail
     thumbnail = generate_thumbnail(image)
+    thumbnail = enable_image_streaming(image, "image/png")
     # 3. save image and thumbnail in storage using background tasks
     background_tasks.add_task(
         upload_original,
@@ -131,22 +140,23 @@ async def get_original_image(
     try:
         if not db.is_image_exists(image_uid):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+        content_type = db.get_image_info(image_uid, keys=["content_type"]).get("content_type")
     except APIError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error connecting to database.",
         )
 
-    content_type = db.get_image_info(image_uid, keys=["content_type"]).get("content_type")
     storage = get_storage_handler(storage_client)
     try:
-        image_bytes = storage.get_original(image_uid=image_uid)
+        image_url = storage.get_original_url(image_uid=image_uid)
+        r = requests.get(image_url, stream=True)
     except APIError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error connecting to storage."
         )
 
-    return Response(content=image_bytes, media_type=content_type)
+    return StreamingResponse(r.raw, media_type=content_type)
 
 
 @router.get("/thumbnail/{image_uid}", status_code=status.HTTP_200_OK)

@@ -28,11 +28,17 @@ class StorageOperator(ABC):
         pass
 
     @abstractmethod
-    def get_original(self, image_uid: str, format: str) -> bytes:
+    def get_original_url(self, image_uid: str) -> str:
+        """
+        Generate a temporarily available url to download the original image.
+        """
         pass
 
     @abstractmethod
-    def get_thumbnail(self, image_uid: str):
+    def get_thumbnail_url(self, image_uid: str) -> str:
+        """
+        Generate a temporarily available url to download the thumbnail of the image.
+        """
         pass
 
     @abstractmethod
@@ -74,20 +80,24 @@ class SupabaseStorage(StorageOperator):
                 detail="Error connecting to database",
             )
 
-    def get_original(self, image_uid: str) -> bytes:
+    def get_original_url(self, image_uid: str) -> str:
         try:
-            response = self.client.storage.from_("images").download(path=f"original/{image_uid}")
-            return response
+            response = self.client.storage.from_("images").create_signed_url(
+                path=f"original/{image_uid}", expires_in=60
+            )
+            return response["signedURL"]
         except APIError:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error connecting to database",
             )
 
-    def get_thumbnail(self, image_uid: str):
+    def get_thumbnail_url(self, image_uid: str) -> str:
         try:
-            response = self.client.storage.from_("images").download(path=f"thumbnail/{image_uid}")
-            return response
+            response = self.client.storage.from_("images").create_signed_url(
+                path=f"thumbnail/{image_uid}", expires_in=60
+            )
+            return response["signedURL"]
         except APIError:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
