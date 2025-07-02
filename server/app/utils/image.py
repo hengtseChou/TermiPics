@@ -51,7 +51,7 @@ def is_streaming_optimized(image: ImageFile, content_type: str) -> bool:
         raise ValueError(f"Unsupported content type: {content_type}")
 
 
-def enable_streaming_image(image_bytes: bytes, content_type: str) -> bytes:
+def enable_image_streaming(image_bytes: bytes, content_type: str) -> bytes:
     """
     Convert image bytes into a progressive JPEG or interlaced PNG,
     preserving transparency and format when appropriate.
