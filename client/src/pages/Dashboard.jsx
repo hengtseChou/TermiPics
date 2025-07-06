@@ -34,13 +34,14 @@ function Dashboard() {
     const access_token = getCookie("access_token");
     try {
       const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/user/info`, {
-        params: { keys: "image_count" },
+        params: { keys: "image_count,labels" },
         headers: { Authorization: `Bearer ${access_token}` },
       });
       setImageCount(response.data.image_count);
+      setAllLabels(response.data.labels);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching image count:", error);
+      console.error("Error fetching user info while page initialize:", error);
     }
   };
 
@@ -50,6 +51,13 @@ function Dashboard() {
       fetchImages();
     }
   }, [imageCount]);
+
+  // Fetch images when toggledLabels, page, sortBy, or sortOrder changes
+  useEffect(() => {
+    if (imageCount > 0) {
+      fetchImages();
+    }
+  }, [toggledLabels, page, sortBy, sortOrder]);
 
   const fetchImages = async () => {
     const access_token = getCookie("access_token");
@@ -63,6 +71,23 @@ function Dashboard() {
     } catch (error) {
       console.error("Error fetching images:", error);
     }
+  };
+
+  const toggleLabel = label => {
+    setToggledLabels(prev => {
+      if (prev.includes(label)) {
+        return prev.filter(l => l !== label);
+      } else {
+        return [...prev, label];
+      }
+    });
+    // Reset to first page when filtering changes
+    setPage(1);
+  };
+
+  const clearAllLabels = () => {
+    setToggledLabels([]);
+    setPage(1);
   };
 
   const openModal = () => {
@@ -174,13 +199,37 @@ function Dashboard() {
           ) : imageCount === 0 ? (
             <>
               <div>
-                <p>emptyness...</p>
+                <p>Tip: You can filter upload pictures by labels!</p>
               </div>
             </>
           ) : (
             <>
-              <h1 className="text-xl text-center">Labels</h1>
-              <p className="text-center">Explore your uploaded images below.</p>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-start mb-2 ms-1">Filter by labels</p>
+                </div>
+                <div className="space-y-2">
+                  {allLabels.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {allLabels.map((label, index) => (
+                        <button
+                          key={index}
+                          onClick={() => toggleLabel(label)}
+                          className={`px-3 py-1 rounded-full text-sm border transition-all duration-200 cursor-pointer ${
+                            toggledLabels.includes(label)
+                              ? "bg-green-500 bg-opacity-20 border-green-400 text-green-300 shadow-sm"
+                              : "bg-transparent border-green-700 text-green-500 hover:border-green-500 hover:bg-green-900 hover:bg-opacity-10"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-green-400">No labels available</p>
+                  )}
+                </div>
+              </div>
             </>
           )}
         </div>
