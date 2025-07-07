@@ -105,24 +105,24 @@ function ImageCard({ imageUid }) {
         </div>
 
         {imageDetail.labels.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {imageDetail.labels.slice(0, 3).map((label, idx) => (
+          <div className="flex flex-wrap gap-2">
+            {imageDetail.labels.map((label, idx) => (
               <span
                 key={idx}
-                className="px-2 py-1 bg-green-500 bg-opacity-20 border border-green-600 text-green-300 text-xs rounded-full"
+                className="px-3 py-1 rounded-full bg-green-500 bg-opacity-20 border border-green-500 text-green-300 text-xs "
               >
                 {label}
               </span>
             ))}
             {imageDetail.labels.length > 3 && (
-              <span className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded-full">
+              <span className="px-3 py-1 rounded-full bg-gray-700 text-gray-300 text-xs">
                 +{imageDetail.labels.length - 3}
               </span>
             )}
           </div>
         )}
 
-        <div className="text-xs text-green-400 opacity-70">{formatDate(imageDetail.created_at)}</div>
+        <div className="text-xs text-green-500 opacity-70">{formatDate(imageDetail.created_at)}</div>
       </div>
     </div>
   );

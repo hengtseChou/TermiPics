@@ -7,6 +7,7 @@ import ImageCard from "../components/ImageCard";
 import Modal from "../components/ImageUpload";
 import Navbar from "../components/Navbar";
 import showToast from "../components/Notification";
+import Pagination from "../components/Pagination";
 import RollingAsciiAnimation from "../components/RollingArt";
 import { getCookie } from "../utils/cookies";
 
@@ -18,7 +19,7 @@ function Dashboard() {
   const [imageCount, setImageCount] = useState(null);
   const [allLabels, setAllLabels] = useState([]);
 
-  const imagesPerPage = 50;
+  const imagesPerPage = 30;
   const [imageUIDs, setImageUIDs] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -85,11 +86,6 @@ function Dashboard() {
     setPage(1);
   };
 
-  const clearAllLabels = () => {
-    setToggledLabels([]);
-    setPage(1);
-  };
-
   const openModal = () => {
     setIsModalOpened(true);
   };
@@ -140,47 +136,11 @@ function Dashboard() {
     }
   };
 
-  // Spinner component for loading thumbnails
-  const Spinner = () => (
-    <div className="w-6 h-6 border-2 border-green-700 border-t-transparent rounded-full animate-spin"></div>
-  );
-
-  // State to track image loading status
-  const [imageLoadingStates, setImageLoadingStates] = useState({});
-
-  // Placeholder component for loading state
-  const ImageCardPlaceholder = () => (
-    <div className="border border-green-700 bg-gray-900 bg-opacity-30 overflow-hidden animate-pulse">
-      <div className="aspect-video bg-black flex items-center justify-center">
-        <Spinner />
-      </div>
-      <div className="p-3 space-y-2">
-        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-        <div className="flex gap-1">
-          <div className="h-5 bg-gray-700 rounded-full w-12"></div>
-          <div className="h-5 bg-gray-700 rounded-full w-16"></div>
-        </div>
-        <div className="h-3 bg-gray-700 rounded w-1/2"></div>
-      </div>
-    </div>
-  );
-
-  // Format date for display
-  const formatDate = dateString => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   return (
     <div className="flex flex-col bg-black min-h-screen font-mono text-green-500">
       <Navbar />
       <div className="flex-grow gap-4 grid grid-cols-9 mx-4 mb-6">
-        {/* column 1 */}
+        {/* left column */}
         <div className="col-span-2 p-4 border border-green-700">
           {initializing ? (
             <div className="flex justify-center items-center h-full">
@@ -190,8 +150,8 @@ function Dashboard() {
             <RollingAsciiAnimation />
           )}
         </div>
-        {/* column 2 */}
-        <div className="col-span-5 p-4 border border-green-700">
+        {/* center column */}
+        <div className="relative col-span-5 p-4 border border-green-700">
           {initializing ? (
             <div className="flex justify-center items-center h-full">
               <p>Loading...</p>
@@ -225,11 +185,11 @@ function Dashboard() {
                   </button>
 
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-green-400">Sort by:</label>
+                    <label className="text-sm text-green-500">Sort by:</label>
                     <select
                       value={sortBy}
                       onChange={e => setSortBy(e.target.value)}
-                      className="bg-gray-900 border border-green-700 text-green-400 px-3 py-1 rounded focus:outline-none focus:border-green-500"
+                      className="bg-gray-900 border border-green-700 text-green-300 px-3 py-1 rounded focus:outline-none focus:border-green-500"
                     >
                       <option value="created_at">Date Created</option>
                       <option value="updated_at">Date Modified</option>
@@ -239,11 +199,11 @@ function Dashboard() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-green-400">Order:</label>
+                    <label className="text-sm text-green-500">Order:</label>
                     <select
                       value={sortOrder}
                       onChange={e => setSortOrder(e.target.value)}
-                      className="bg-gray-900 border border-green-700 text-green-400 px-3 py-1 rounded focus:outline-none focus:border-green-500"
+                      className="bg-gray-900 border border-green-700 text-green-300 px-3 py-1 rounded focus:outline-none focus:border-green-500"
                     >
                       <option value="desc">Descending</option>
                       <option value="asc">Ascending</option>
@@ -258,10 +218,13 @@ function Dashboard() {
                   <ImageCard key={uid} imageUid={uid} />
                 ))}
               </div>
+
+              {/* Pagination */}
+              <Pagination page={page} totalPages={totalPages} onPageChange={newPage => setPage(newPage)} />
             </>
           )}
         </div>
-        {/* column 3 */}
+        {/* right column */}
         <div className="col-span-2 p-4 border border-green-700">
           {initializing ? (
             <div className="flex justify-center items-center h-full">
