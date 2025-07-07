@@ -89,7 +89,7 @@ async def query_images(
         - page (int)
             Page number for pagination. Each page returns up to 50 images.
         - sort_by (str)
-            Sort field. Options: "title", "created_at", "updated_at".
+            Sort field. Options: "title", "created_at", "updated_at", "file_name".
         - sort_order (str)
             Sort direction. Options: "desc" (descending), "asc" (ascending).
         - labels (str)

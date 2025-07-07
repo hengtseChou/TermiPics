@@ -73,7 +73,7 @@ class UserInfoResponse(BaseModel):
 
 class ImageQueryRequest(BaseModel):
     page: int
-    sort_by: Literal["title", "created_at", "updated_at"]
+    sort_by: Literal["title", "created_at", "updated_at", "file_name"]
     sort_order: Literal["desc", "asc"]
     labels: str
 
