@@ -6,7 +6,7 @@ from app.dependencies.db import DatabaseClient, get_db_handler
 from app.dependencies.storage import StorageClient, get_storage_handler
 
 SUPPORTED_FORMATS = {"PNG", "JPEG"}
-THUMBNAIL_SIZE = (128, 128)
+THUMBNAIL_SIZE = (400, 225)
 
 
 class UnsupportedFormat(Exception):
@@ -15,7 +15,7 @@ class UnsupportedFormat(Exception):
 
 def generate_thumbnail(image_bytes: bytes) -> bytes:
     """
-    Crop image to center square and resize to 128x128 (upscaling if needed).
+    Crop image to center 16:9 aspect ratio and resize if larger than THUMBNAIL_SIZE.
     Supports PNG, JPEG.
 
     Returns:
@@ -30,14 +30,30 @@ def generate_thumbnail(image_bytes: bytes) -> bytes:
         raise UnsupportedFormat(f"Unsupported format: {image.format}")
 
     width, height = image.size
-    min_dim = min(width, height)
-    left = (width - min_dim) // 2
-    top = (height - min_dim) // 2
-    image_cropped = image.crop((left, top, left + min_dim, top + min_dim))
+    target_aspect_ratio = THUMBNAIL_SIZE[0] / THUMBNAIL_SIZE[1]
 
-    thumbnail = image_cropped.resize(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+    # Calculate cropping dimensions for 16:9 aspect ratio
+    if width / height > target_aspect_ratio:
+        new_width = int(height * target_aspect_ratio)
+        left = (width - new_width) // 2
+        top = 0
+        right = left + new_width
+        bottom = height
+    else:
+        new_height = int(width / target_aspect_ratio)
+        left = 0
+        top = (height - new_height) // 2
+        right = width
+        bottom = top + new_height
+
+    cropped = image.crop((left, top, right, bottom))
+
+    # Resize only if the image is larger than THUMBNAIL_SIZE
+    if cropped.size[0] > THUMBNAIL_SIZE[0] or cropped.size[1] > THUMBNAIL_SIZE[1]:
+        cropped = cropped.resize(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+
     buffer = BytesIO()
-    thumbnail.save(buffer, format="PNG")
+    cropped.save(buffer, format="PNG")
 
     return buffer.getvalue()
 

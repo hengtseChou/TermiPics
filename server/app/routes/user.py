@@ -41,6 +41,7 @@ async def get_user_info(
         - password (str): Hashed password.
         - avatar (str): Avatar URL.
         - image_count (int): Total images.
+        - labels (list[str]): Labels from uploaded images.
         - is_premium (bool): Whether the user has premium access.
 
     Header Parameters:

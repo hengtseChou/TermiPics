@@ -67,6 +67,7 @@ class UserInfoResponse(BaseModel):
     password: Optional[str] = None
     avatar: Optional[str] = None
     image_count: Optional[int] = None
+    labels: Optional[list[str]] = None
     is_premium: Optional[bool] = None
 
 
@@ -83,3 +84,11 @@ class ImageQueryResponse(BaseModel):
 
 class ImageUploadResponse(BaseModel):
     image_uid: str
+
+
+class ImageInfoResponse(BaseModel):
+    title: str
+    file_name: str
+    labels: list[str]
+    created_at: str
+    updated_at: str
