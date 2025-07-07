@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import axios from "axios";
 import { Upload } from "lucide-react";
 
+import ImageCard from "../components/ImageCard";
 import Modal from "../components/ImageUpload";
 import Navbar from "../components/Navbar";
 import showToast from "../components/Notification";
@@ -18,8 +19,7 @@ function Dashboard() {
   const [allLabels, setAllLabels] = useState([]);
 
   const imagesPerPage = 50;
-  const [images, setImages] = useState([]);
-  const [imageDetails, setImageDetails] = useState({});
+  const [imageUIDs, setImageUIDs] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState("created_at");
@@ -48,18 +48,18 @@ function Dashboard() {
   useEffect(() => {
     if (imageCount > 0) {
       setTotalPages(Math.ceil(imageCount / imagesPerPage));
-      fetchImages();
+      fetchImageUIDs();
     }
   }, [imageCount]);
 
   // Fetch images when toggledLabels, page, sortBy, or sortOrder changes
   useEffect(() => {
     if (imageCount > 0) {
-      fetchImages();
+      fetchImageUIDs();
     }
   }, [toggledLabels, page, sortBy, sortOrder]);
 
-  const fetchImages = async () => {
+  const fetchImageUIDs = async () => {
     const access_token = getCookie("access_token");
     try {
       const labels = toggledLabels.length > 0 ? toggledLabels.join(",") : "";
@@ -67,56 +67,9 @@ function Dashboard() {
         params: { page: page, sort_by: sortBy, sort_order: sortOrder, labels: labels },
         headers: { Authorization: `Bearer ${access_token}` },
       });
-      setImages(response.data.image_uid);
-
-      // Fetch detailed info for each image
-      response.data.image_uid.forEach(image => {
-        fetchImageInfo(image);
-      });
+      setImageUIDs(response.data.image_uid);
     } catch (error) {
       console.error("Error fetching images:", error);
-    }
-  };
-
-  const fetchImageInfo = async imageUid => {
-    const access_token = getCookie("access_token");
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/image/info/${imageUid}`, {
-        headers: { Authorization: `Bearer ${access_token}` },
-      });
-
-      // Create image detail object
-      const imageDetail = {
-        title: response.data.title || "Untitled",
-        file_name: response.data.file_name || "",
-        labels: response.data.labels || [],
-        created_at: response.data.created_at || "",
-        updated_at: response.data.updated_at || "",
-        image_uid: imageUid,
-        original_url: response.data.original_url || "",
-        thumbnail_url: `${import.meta.env.VITE_SERVER_URL}/image/thumbnail/${imageUid}`,
-      };
-
-      setImageDetails(prev => ({
-        ...prev,
-        [imageUid]: imageDetail,
-      }));
-    } catch (error) {
-      console.error(`Error fetching image info for ${imageUid}:`, error);
-      // Set placeholder data on error
-      setImageDetails(prev => ({
-        ...prev,
-        [imageUid]: {
-          title: "Error loading image",
-          file_name: "",
-          labels: [],
-          created_at: "",
-          updated_at: "",
-          image_uid: imageUid,
-          original_url: "",
-          thumbnail_url: "",
-        },
-      }));
     }
   };
 
@@ -260,84 +213,50 @@ function Dashboard() {
             </>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-4">
-                {images.map((imageUid, index) => {
-                  const imageDetail = imageDetails[imageUid];
+              {/* Toolbar */}
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-green-700">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={openModal}
+                    className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 px-4 py-2 border border-green-300 rounded-xl text-green-300 cursor-pointer transition-colors"
+                  >
+                    <Upload size={16} />
+                    Upload
+                  </button>
 
-                  // Show placeholder while loading
-                  if (!imageDetail) {
-                    return <ImageCardPlaceholder key={index} />;
-                  }
-
-                  return (
-                    <div
-                      key={index}
-                      className="border border-green-700 bg-gray-900 bg-opacity-30 overflow-hidden hover:border-green-500 transition-colors duration-200"
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-green-400">Sort by:</label>
+                    <select
+                      value={sortBy}
+                      onChange={e => setSortBy(e.target.value)}
+                      className="bg-gray-900 border border-green-700 text-green-400 px-3 py-1 rounded focus:outline-none focus:border-green-500"
                     >
-                      {/* Image container */}
-                      <div className="aspect-video bg-gray-800 overflow-hidden relative">
-                        {/* Loading spinner - shown while image is loading */}
-                        {imageLoadingStates[imageUid] !== false && (
-                          <div className="absolute inset-0 bg-black flex justify-center items-center z-10">
-                            <Spinner />
-                          </div>
-                        )}
+                      <option value="created_at">Date Created</option>
+                      <option value="updated_at">Date Modified</option>
+                      <option value="title">Title</option>
+                      <option value="file_name">File Name</option>
+                    </select>
+                  </div>
 
-                        <img
-                          src={imageDetail.thumbnail_url}
-                          alt="" // Empty alt to prevent text from showing
-                          className="w-full h-full object-cover bg-gray-800"
-                          style={{ backgroundColor: "#1f2937" }} // Tailwind's gray-800
-                          onLoad={() => {
-                            // Image loaded successfully
-                            setImageLoadingStates(prev => ({ ...prev, [imageUid]: false }));
-                          }}
-                          onError={() => {
-                            // Image failed to load, keep spinner visible
-                            setImageLoadingStates(prev => ({ ...prev, [imageUid]: true }));
-                          }}
-                        />
-                      </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-green-400">Order:</label>
+                    <select
+                      value={sortOrder}
+                      onChange={e => setSortOrder(e.target.value)}
+                      className="bg-gray-900 border border-green-700 text-green-400 px-3 py-1 rounded focus:outline-none focus:border-green-500"
+                    >
+                      <option value="desc">Descending</option>
+                      <option value="asc">Ascending</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
-                      {/* Card content */}
-                      <div className="p-3 space-y-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <h3
-                            className="text-green-300 font-semibold text-sm truncate flex-shrink-0"
-                            title={imageDetail.title}
-                          >
-                            {imageDetail.title}
-                          </h3>
-                          <p className="text-xs text-gray-400 truncate min-w-0" title={imageDetail.file_name}>
-                            {imageDetail.file_name}
-                          </p>
-                        </div>
-
-                        {/* Labels */}
-                        {imageDetail.labels && imageDetail.labels.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {imageDetail.labels.slice(0, 3).map((label, labelIndex) => (
-                              <span
-                                key={labelIndex}
-                                className="px-2 py-1 bg-green-500 bg-opacity-20 border border-green-600 text-green-300 text-xs rounded-full"
-                              >
-                                {label}
-                              </span>
-                            ))}
-                            {imageDetail.labels.length > 3 && (
-                              <span className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded-full">
-                                +{imageDetail.labels.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Date */}
-                        <div className="text-xs text-green-400 opacity-70">{formatDate(imageDetail.created_at)}</div>
-                      </div>
-                    </div>
-                  );
-                })}
+              {/* Images Grid */}
+              <div className="grid grid-cols-3 gap-4">
+                {imageUIDs.map(uid => (
+                  <ImageCard key={uid} imageUid={uid} />
+                ))}
               </div>
             </>
           )}
