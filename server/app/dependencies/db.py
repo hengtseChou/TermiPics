@@ -255,12 +255,12 @@ class SupabaseTable(TableOperator):
         page: int,
         sort_by: str,
         sort_order: str,
-        labels: list[str],
+        labels: Optional[list[str]],
     ) -> list[str]:
         desc = True if sort_order == "desc" else False
-        images_per_page = 50
+        images_per_page = 30
         start = (page - 1) * images_per_page
-        end = start + images_per_page
+        end = start + images_per_page - 1
         if labels:
             response = (
                 self.client.table("images")
